@@ -1,0 +1,85 @@
+name: Test/Build
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v6
+        with:
+          distribution: 'zulu'
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - uses: ./.github/actions/cache-konan
+
+      - name: Linter (gradle)
+        run: ./gradlew spotlessCheck
+
+      # Claude Code and Codex read the same AGENTS.md and skills (see AGENTS.md).
+      - name: Check agent config
+        run: python3 tools/agent-hooks/agent_config_check.py
+
+      # The public API must match kiko/api/: a change to it is deliberate (updateKotlinAbi) and
+      # visible in review, and a breaking one needs a major version.
+      - name: Check public API
+        run: ./gradlew :kiko:checkKotlinAbi
+
+      - name: Check JVM and Android (host)
+        run: ./gradlew :kiko:jvmTest :kiko:testAndroidHostTest
+
+      # The common tests on a Linux binary: no JVM, a native stack and native memory.
+      - name: Check Linux native
+        run: ./gradlew :kiko:linuxX64Test
+
+      # The common tests on Kotlin/JS (which emulates 64-bit Long) and on Kotlin/Wasm, each in
+      # Node.js and in headless Chrome.
+      - name: Check JavaScript and Wasm
+        run: ./gradlew :kiko:jsTest :kiko:wasmJsTest
+
+      # Apple code compiles on Linux as metadata, so a mistake fails here in minutes instead of
+      # in the macOS job.
+      - name: Check common code compiles
+        run: ./gradlew :kiko:compileCommonMainKotlinMetadata
+
+      - name: Build (gradle)
+        run: ./gradlew assemble
+
+  # Apple test binaries link and run only on macOS.
+  test-apple:
+    needs: build
+    runs-on: macos-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v6
+        with:
+          distribution: 'zulu'
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - uses: ./.github/actions/cache-konan
+
+      # iosArm64 has no simulator to run on; compiling its tests catches device-only drift.
+      - name: Check iOS and macOS
+        run: ./gradlew :kiko:iosSimulatorArm64Test :kiko:macosArm64Test :kiko:compileTestKotlinIosArm64

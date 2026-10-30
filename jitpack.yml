@@ -1,0 +1,11 @@
+jdk:
+  - openjdk21
+before_install:
+  - echo 'allprojects { tasks.matching { it.name.toLowerCase().startsWith("sign") }.configureEach { it.enabled = false } }' > nosign.init.gradle
+install:
+  # JitPack's ~/.gradle/init.d/maven-mirror.gradle points every Maven Central repository at
+  # $MAVEN_CENTRAL_MIRROR, Google's mirror, which lags Central by days. Without the variable the
+  # script does nothing, and Gradle reads Central itself (same fix as Quartz).
+  # JitPack snapshots carry the common metadata, the JVM and the Android library; native and web
+  # artifacts come from Maven Central releases.
+  - env -u MAVEN_CENTRAL_MIRROR ./gradlew :kiko:publishKotlinMultiplatformPublicationToMavenLocal :kiko:publishJvmPublicationToMavenLocal :kiko:publishAndroidPublicationToMavenLocal --init-script nosign.init.gradle

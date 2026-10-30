@@ -1,0 +1,107 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64, js, linuxX64, macosArm64, wasmJs]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <kiko-kmp:kiko>
+abstract interface com.vitorpamplona.kiko.runtime/ConsoleHost { // com.vitorpamplona.kiko.runtime/ConsoleHost|null[0]
+    open fun loadCart(kotlin/String): kotlin/ByteArray? // com.vitorpamplona.kiko.runtime/ConsoleHost.loadCart|loadCart(kotlin.String){}[0]
+    open fun loadCartData(kotlin/String): kotlin/IntArray? // com.vitorpamplona.kiko.runtime/ConsoleHost.loadCartData|loadCartData(kotlin.String){}[0]
+    open fun log(kotlin/String) // com.vitorpamplona.kiko.runtime/ConsoleHost.log|log(kotlin.String){}[0]
+    open fun memoryLow(): kotlin/Boolean // com.vitorpamplona.kiko.runtime/ConsoleHost.memoryLow|memoryLow(){}[0]
+    open fun saveCartData(kotlin/String, kotlin/IntArray) // com.vitorpamplona.kiko.runtime/ConsoleHost.saveCartData|saveCartData(kotlin.String;kotlin.IntArray){}[0]
+    open fun utcOffsetSeconds(): kotlin/Int // com.vitorpamplona.kiko.runtime/ConsoleHost.utcOffsetSeconds|utcOffsetSeconds(){}[0]
+}
+
+final class com.vitorpamplona.kiko.cart/Cart { // com.vitorpamplona.kiko.cart/Cart|null[0]
+    constructor <init>(kotlin/ByteArray, kotlin/String) // com.vitorpamplona.kiko.cart/Cart.<init>|<init>(kotlin.ByteArray;kotlin.String){}[0]
+
+    final val code // com.vitorpamplona.kiko.cart/Cart.code|{}code[0]
+        final fun <get-code>(): kotlin/String // com.vitorpamplona.kiko.cart/Cart.code.<get-code>|<get-code>(){}[0]
+    final val rom // com.vitorpamplona.kiko.cart/Cart.rom|{}rom[0]
+        final fun <get-rom>(): kotlin/ByteArray // com.vitorpamplona.kiko.cart/Cart.rom.<get-rom>|<get-rom>(){}[0]
+
+    final object Companion { // com.vitorpamplona.kiko.cart/Cart.Companion|null[0]
+        final const val ROM_SIZE // com.vitorpamplona.kiko.cart/Cart.Companion.ROM_SIZE|{}ROM_SIZE[0]
+            final fun <get-ROM_SIZE>(): kotlin/Int // com.vitorpamplona.kiko.cart/Cart.Companion.ROM_SIZE.<get-ROM_SIZE>|<get-ROM_SIZE>(){}[0]
+    }
+}
+
+final class com.vitorpamplona.kiko.cart/CartFormatException : kotlin/Exception { // com.vitorpamplona.kiko.cart/CartFormatException|null[0]
+    constructor <init>(kotlin/String, kotlin/Throwable? = ...) // com.vitorpamplona.kiko.cart/CartFormatException.<init>|<init>(kotlin.String;kotlin.Throwable?){}[0]
+}
+
+final class com.vitorpamplona.kiko.runtime/FantasyConsole { // com.vitorpamplona.kiko.runtime/FantasyConsole|null[0]
+    constructor <init>(com.vitorpamplona.kiko.cart/Cart, com.vitorpamplona.kiko.runtime/ConsoleHost = ...) // com.vitorpamplona.kiko.runtime/FantasyConsole.<init>|<init>(com.vitorpamplona.kiko.cart.Cart;com.vitorpamplona.kiko.runtime.ConsoleHost){}[0]
+
+    final val audioBuffer // com.vitorpamplona.kiko.runtime/FantasyConsole.audioBuffer|{}audioBuffer[0]
+        final fun <get-audioBuffer>(): kotlin/FloatArray // com.vitorpamplona.kiko.runtime/FantasyConsole.audioBuffer.<get-audioBuffer>|<get-audioBuffer>(){}[0]
+    final val host // com.vitorpamplona.kiko.runtime/FantasyConsole.host|{}host[0]
+        final fun <get-host>(): com.vitorpamplona.kiko.runtime/ConsoleHost // com.vitorpamplona.kiko.runtime/FantasyConsole.host.<get-host>|<get-host>(){}[0]
+    final val isPaused // com.vitorpamplona.kiko.runtime/FantasyConsole.isPaused|{}isPaused[0]
+        final fun <get-isPaused>(): kotlin/Boolean // com.vitorpamplona.kiko.runtime/FantasyConsole.isPaused.<get-isPaused>|<get-isPaused>(){}[0]
+
+    final var audioSamples // com.vitorpamplona.kiko.runtime/FantasyConsole.audioSamples|{}audioSamples[0]
+        final fun <get-audioSamples>(): kotlin/Int // com.vitorpamplona.kiko.runtime/FantasyConsole.audioSamples.<get-audioSamples>|<get-audioSamples>(){}[0]
+    final var cart // com.vitorpamplona.kiko.runtime/FantasyConsole.cart|{}cart[0]
+        final fun <get-cart>(): com.vitorpamplona.kiko.cart/Cart // com.vitorpamplona.kiko.runtime/FantasyConsole.cart.<get-cart>|<get-cart>(){}[0]
+    final var error // com.vitorpamplona.kiko.runtime/FantasyConsole.error|{}error[0]
+        final fun <get-error>(): kotlin/String? // com.vitorpamplona.kiko.runtime/FantasyConsole.error.<get-error>|<get-error>(){}[0]
+    final var fps // com.vitorpamplona.kiko.runtime/FantasyConsole.fps|{}fps[0]
+        final fun <get-fps>(): kotlin/Int // com.vitorpamplona.kiko.runtime/FantasyConsole.fps.<get-fps>|<get-fps>(){}[0]
+    final var frameCount // com.vitorpamplona.kiko.runtime/FantasyConsole.frameCount|{}frameCount[0]
+        final fun <get-frameCount>(): kotlin/Long // com.vitorpamplona.kiko.runtime/FantasyConsole.frameCount.<get-frameCount>|<get-frameCount>(){}[0]
+    final var state // com.vitorpamplona.kiko.runtime/FantasyConsole.state|{}state[0]
+        final fun <get-state>(): com.vitorpamplona.kiko.runtime/FantasyConsole.State // com.vitorpamplona.kiko.runtime/FantasyConsole.state.<get-state>|<get-state>(){}[0]
+
+    final fun abort() // com.vitorpamplona.kiko.runtime/FantasyConsole.abort|abort(){}[0]
+    final fun render(kotlin/IntArray) // com.vitorpamplona.kiko.runtime/FantasyConsole.render|render(kotlin.IntArray){}[0]
+    final fun scroll(kotlin/Int) // com.vitorpamplona.kiko.runtime/FantasyConsole.scroll|scroll(kotlin.Int){}[0]
+    final fun setButtons(kotlin/Int, kotlin/Int) // com.vitorpamplona.kiko.runtime/FantasyConsole.setButtons|setButtons(kotlin.Int;kotlin.Int){}[0]
+    final fun setPointer(kotlin/Int, kotlin/Int, kotlin/Int) // com.vitorpamplona.kiko.runtime/FantasyConsole.setPointer|setPointer(kotlin.Int;kotlin.Int;kotlin.Int){}[0]
+    final fun step() // com.vitorpamplona.kiko.runtime/FantasyConsole.step|step(){}[0]
+    final fun type(kotlin/String) // com.vitorpamplona.kiko.runtime/FantasyConsole.type|type(kotlin.String){}[0]
+
+    final enum class State : kotlin/Enum<com.vitorpamplona.kiko.runtime/FantasyConsole.State> { // com.vitorpamplona.kiko.runtime/FantasyConsole.State|null[0]
+        enum entry ERROR // com.vitorpamplona.kiko.runtime/FantasyConsole.State.ERROR|null[0]
+        enum entry FINISHED // com.vitorpamplona.kiko.runtime/FantasyConsole.State.FINISHED|null[0]
+        enum entry RUNNING // com.vitorpamplona.kiko.runtime/FantasyConsole.State.RUNNING|null[0]
+        enum entry STOPPED // com.vitorpamplona.kiko.runtime/FantasyConsole.State.STOPPED|null[0]
+
+        final val entries // com.vitorpamplona.kiko.runtime/FantasyConsole.State.entries|#static{}entries[0]
+            final fun <get-entries>(): kotlin.enums/EnumEntries<com.vitorpamplona.kiko.runtime/FantasyConsole.State> // com.vitorpamplona.kiko.runtime/FantasyConsole.State.entries.<get-entries>|<get-entries>#static(){}[0]
+
+        final fun valueOf(kotlin/String): com.vitorpamplona.kiko.runtime/FantasyConsole.State // com.vitorpamplona.kiko.runtime/FantasyConsole.State.valueOf|valueOf#static(kotlin.String){}[0]
+        final fun values(): kotlin/Array<com.vitorpamplona.kiko.runtime/FantasyConsole.State> // com.vitorpamplona.kiko.runtime/FantasyConsole.State.values|values#static(){}[0]
+    }
+
+    final object Companion { // com.vitorpamplona.kiko.runtime/FantasyConsole.Companion|null[0]
+        final const val RECOMMENDED_STACK_BYTES // com.vitorpamplona.kiko.runtime/FantasyConsole.Companion.RECOMMENDED_STACK_BYTES|{}RECOMMENDED_STACK_BYTES[0]
+            final fun <get-RECOMMENDED_STACK_BYTES>(): kotlin/Long // com.vitorpamplona.kiko.runtime/FantasyConsole.Companion.RECOMMENDED_STACK_BYTES.<get-RECOMMENDED_STACK_BYTES>|<get-RECOMMENDED_STACK_BYTES>(){}[0]
+        final const val SAMPLE_RATE // com.vitorpamplona.kiko.runtime/FantasyConsole.Companion.SAMPLE_RATE|{}SAMPLE_RATE[0]
+            final fun <get-SAMPLE_RATE>(): kotlin/Int // com.vitorpamplona.kiko.runtime/FantasyConsole.Companion.SAMPLE_RATE.<get-SAMPLE_RATE>|<get-SAMPLE_RATE>(){}[0]
+    }
+}
+
+final object com.vitorpamplona.kiko.cart/CartLoader { // com.vitorpamplona.kiko.cart/CartLoader|null[0]
+    final const val CART_HEIGHT // com.vitorpamplona.kiko.cart/CartLoader.CART_HEIGHT|{}CART_HEIGHT[0]
+        final fun <get-CART_HEIGHT>(): kotlin/Int // com.vitorpamplona.kiko.cart/CartLoader.CART_HEIGHT.<get-CART_HEIGHT>|<get-CART_HEIGHT>(){}[0]
+    final const val CART_WIDTH // com.vitorpamplona.kiko.cart/CartLoader.CART_WIDTH|{}CART_WIDTH[0]
+        final fun <get-CART_WIDTH>(): kotlin/Int // com.vitorpamplona.kiko.cart/CartLoader.CART_WIDTH.<get-CART_WIDTH>|<get-CART_WIDTH>(){}[0]
+    final const val SHAPE_PREFIX_BYTES // com.vitorpamplona.kiko.cart/CartLoader.SHAPE_PREFIX_BYTES|{}SHAPE_PREFIX_BYTES[0]
+        final fun <get-SHAPE_PREFIX_BYTES>(): kotlin/Int // com.vitorpamplona.kiko.cart/CartLoader.SHAPE_PREFIX_BYTES.<get-SHAPE_PREFIX_BYTES>|<get-SHAPE_PREFIX_BYTES>(){}[0]
+
+    final fun fromPng(kotlin/ByteArray): com.vitorpamplona.kiko.cart/Cart // com.vitorpamplona.kiko.cart/CartLoader.fromPng|fromPng(kotlin.ByteArray){}[0]
+    final fun fromRom(kotlin/ByteArray): com.vitorpamplona.kiko.cart/Cart // com.vitorpamplona.kiko.cart/CartLoader.fromRom|fromRom(kotlin.ByteArray){}[0]
+    final fun fromText(kotlin/String): com.vitorpamplona.kiko.cart/Cart // com.vitorpamplona.kiko.cart/CartLoader.fromText|fromText(kotlin.String){}[0]
+    final fun hasCartShape(kotlin/ByteArray): kotlin/Boolean // com.vitorpamplona.kiko.cart/CartLoader.hasCartShape|hasCartShape(kotlin.ByteArray){}[0]
+    final fun isCart(kotlin/ByteArray): kotlin/Boolean // com.vitorpamplona.kiko.cart/CartLoader.isCart|isCart(kotlin.ByteArray){}[0]
+    final fun load(kotlin/ByteArray): com.vitorpamplona.kiko.cart/Cart // com.vitorpamplona.kiko.cart/CartLoader.load|load(kotlin.ByteArray){}[0]
+}
+
+final object com.vitorpamplona.kiko.cart/P8scii { // com.vitorpamplona.kiko.cart/P8scii|null[0]
+    final fun fromUnicode(kotlin/String): kotlin/String // com.vitorpamplona.kiko.cart/P8scii.fromUnicode|fromUnicode(kotlin.String){}[0]
+    final fun toUnicode(kotlin/String): kotlin/String // com.vitorpamplona.kiko.cart/P8scii.toUnicode|toUnicode(kotlin.String){}[0]
+}
