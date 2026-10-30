@@ -1,0 +1,90 @@
+public final class com/vitorpamplona/kiko/cart/Cart {
+	public static final field Companion Lcom/vitorpamplona/kiko/cart/Cart$Companion;
+	public static final field ROM_SIZE I
+	public fun <init> ([BLjava/lang/String;)V
+	public final fun getCode ()Ljava/lang/String;
+	public final fun getRom ()[B
+}
+
+public final class com/vitorpamplona/kiko/cart/Cart$Companion {
+}
+
+public final class com/vitorpamplona/kiko/cart/CartFormatException : java/lang/Exception {
+	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
+public final class com/vitorpamplona/kiko/cart/CartLoader {
+	public static final field CART_HEIGHT I
+	public static final field CART_WIDTH I
+	public static final field INSTANCE Lcom/vitorpamplona/kiko/cart/CartLoader;
+	public static final field SHAPE_PREFIX_BYTES I
+	public final fun fromPng ([B)Lcom/vitorpamplona/kiko/cart/Cart;
+	public final fun fromRom ([B)Lcom/vitorpamplona/kiko/cart/Cart;
+	public final fun fromText (Ljava/lang/String;)Lcom/vitorpamplona/kiko/cart/Cart;
+	public final fun hasCartShape ([B)Z
+	public final fun isCart ([B)Z
+	public final fun load ([B)Lcom/vitorpamplona/kiko/cart/Cart;
+}
+
+public final class com/vitorpamplona/kiko/cart/P8scii {
+	public static final field INSTANCE Lcom/vitorpamplona/kiko/cart/P8scii;
+	public final fun fromUnicode (Ljava/lang/String;)Ljava/lang/String;
+	public final fun toUnicode (Ljava/lang/String;)Ljava/lang/String;
+}
+
+public abstract interface class com/vitorpamplona/kiko/runtime/ConsoleHost {
+	public fun loadCart (Ljava/lang/String;)[B
+	public fun loadCartData (Ljava/lang/String;)[I
+	public fun log (Ljava/lang/String;)V
+	public fun memoryLow ()Z
+	public fun saveCartData (Ljava/lang/String;[I)V
+	public fun utcOffsetSeconds ()I
+}
+
+public final class com/vitorpamplona/kiko/runtime/ConsoleHost$DefaultImpls {
+	public static fun loadCart (Lcom/vitorpamplona/kiko/runtime/ConsoleHost;Ljava/lang/String;)[B
+	public static fun loadCartData (Lcom/vitorpamplona/kiko/runtime/ConsoleHost;Ljava/lang/String;)[I
+	public static fun log (Lcom/vitorpamplona/kiko/runtime/ConsoleHost;Ljava/lang/String;)V
+	public static fun memoryLow (Lcom/vitorpamplona/kiko/runtime/ConsoleHost;)Z
+	public static fun saveCartData (Lcom/vitorpamplona/kiko/runtime/ConsoleHost;Ljava/lang/String;[I)V
+	public static fun utcOffsetSeconds (Lcom/vitorpamplona/kiko/runtime/ConsoleHost;)I
+}
+
+public final class com/vitorpamplona/kiko/runtime/FantasyConsole {
+	public static final field Companion Lcom/vitorpamplona/kiko/runtime/FantasyConsole$Companion;
+	public static final field RECOMMENDED_STACK_BYTES J
+	public static final field SAMPLE_RATE I
+	public fun <init> (Lcom/vitorpamplona/kiko/cart/Cart;Lcom/vitorpamplona/kiko/runtime/ConsoleHost;)V
+	public synthetic fun <init> (Lcom/vitorpamplona/kiko/cart/Cart;Lcom/vitorpamplona/kiko/runtime/ConsoleHost;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun abort ()V
+	public final fun getAudioBuffer ()[F
+	public final fun getAudioSamples ()I
+	public final fun getCart ()Lcom/vitorpamplona/kiko/cart/Cart;
+	public final fun getError ()Ljava/lang/String;
+	public final fun getFps ()I
+	public final fun getFrameCount ()J
+	public final fun getHost ()Lcom/vitorpamplona/kiko/runtime/ConsoleHost;
+	public final fun getState ()Lcom/vitorpamplona/kiko/runtime/FantasyConsole$State;
+	public final fun isPaused ()Z
+	public final fun render ([I)V
+	public final fun scroll (I)V
+	public final fun setButtons (II)V
+	public final fun setPointer (III)V
+	public final fun step ()V
+	public final fun type (Ljava/lang/String;)V
+}
+
+public final class com/vitorpamplona/kiko/runtime/FantasyConsole$Companion {
+}
+
+public final class com/vitorpamplona/kiko/runtime/FantasyConsole$State : java/lang/Enum {
+	public static final field ERROR Lcom/vitorpamplona/kiko/runtime/FantasyConsole$State;
+	public static final field FINISHED Lcom/vitorpamplona/kiko/runtime/FantasyConsole$State;
+	public static final field RUNNING Lcom/vitorpamplona/kiko/runtime/FantasyConsole$State;
+	public static final field STOPPED Lcom/vitorpamplona/kiko/runtime/FantasyConsole$State;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/vitorpamplona/kiko/runtime/FantasyConsole$State;
+	public static fun values ()[Lcom/vitorpamplona/kiko/runtime/FantasyConsole$State;
+}
+
