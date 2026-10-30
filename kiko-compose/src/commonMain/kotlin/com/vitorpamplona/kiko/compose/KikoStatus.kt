@@ -35,6 +35,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.progressSemantics
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,9 +50,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vitorpamplona.kiko.player.KikoPlayer
 
-/** What the player is doing, over the game: a spinner while it loads, a line when it cannot play or has stopped. */
+/**
+ * What [player] is doing, to lay over its screen: a spinner while it loads, a line when it cannot
+ * play or has stopped (the game's last screen stays up under it), nothing while it plays.
+ */
 @Composable
-internal fun StatusOverlay(
+public fun KikoStatus(
+    player: KikoPlayer,
+    modifier: Modifier = Modifier,
+    labels: KikoLabels = KikoLabels.Default,
+) {
+    val status by player.status.collectAsState()
+    Box(modifier) { StatusText(status, labels) }
+}
+
+@Composable
+private fun StatusText(
     status: KikoPlayer.Status,
     labels: KikoLabels,
 ) {
@@ -63,9 +77,10 @@ internal fun StatusOverlay(
                     Hint(labels.loading, Modifier.padding(16.dp))
                 }
             }
-        KikoPlayer.Status.NotACart ->
+        is KikoPlayer.Status.Failed ->
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Hint(labels.notACart, Modifier.padding(32.dp))
+                val text = if (status.reason == KikoPlayer.Reason.NOT_A_CART) labels.notACart else labels.noCart
+                Hint(text, Modifier.padding(32.dp))
             }
         is KikoPlayer.Status.Stopped -> {
             // The game's last screen (with any error drawn on it) stays up; this only labels it.

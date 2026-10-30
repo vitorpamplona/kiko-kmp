@@ -20,11 +20,40 @@
  */
 package com.vitorpamplona.kiko.compose
 
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.key.utf16CodePoint
 import com.vitorpamplona.kiko.runtime.Buttons
+
+/**
+ * The keyboard and gamepad for [input]: arrows, Z/C/N for O, X/V/M for X, Enter or P to pause,
+ * and every key typed for games that read the keyboard. Escape (and a key-event Back) calls
+ * [onBack]. Keys arrive only while the element has focus: put this before a `focusable()` that
+ * the screen focuses.
+ */
+public fun Modifier.kikoKeys(
+    input: KikoInput,
+    onBack: () -> Unit,
+): Modifier =
+    onKeyEvent { event ->
+        if (event.key == Key.Escape || event.key == Key.Back) {
+            if (event.type == KeyEventType.KeyUp) onBack()
+            return@onKeyEvent true
+        }
+        // Games that read the keyboard get every key typed, buttons included, as on the original.
+        if (event.type == KeyEventType.KeyDown) typedText(event)?.let(input.player::type)
+        val bit = KEY_BITS[event.key] ?: return@onKeyEvent false
+        when (event.type) {
+            KeyEventType.KeyDown -> input.keys = input.keys or bit
+            KeyEventType.KeyUp -> input.keys = input.keys and bit.inv()
+        }
+        true
+    }
 
 /** Keyboard and gamepad keys and the button each holds down. */
 internal val KEY_BITS: Map<Key, Int> =

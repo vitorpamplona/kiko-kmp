@@ -50,6 +50,24 @@ Amethyst keeps cart detection in notes, the Tor-routed download and sha256 check
 the DataStore save store and its string format, its strings, the pause/close buttons, Back and
 Android's window mode.
 
+## API choices (settled before 0.2.0)
+
+- `KikoPlayer` takes a `KikoPlayerHost` (log, time zone, other carts), not kiko's
+  `ConsoleHost`: the player answers saves and memory pressure itself, and a `ConsoleHost`
+  would have offered methods it silently ignored.
+- `Status.Failed(reason)` tells a missing cart (`NO_CART`: the source failed) from bytes that
+  are not one (`NOT_A_CART`), so an app can say "check your connection" or "not a game".
+- Frames are pulled, not handed out: `frameNumber` says a new one is ready and `copyFrame`
+  copies it into the caller's buffer. A handed-out array would have to be reused (a frame is
+  64 KiB, 60 times a second) and change under a reader that kept it. The copy checks the
+  frame counter afterwards and retries if the game reused that buffer meanwhile.
+- `setButtons(mask, playerIndex)`: the console has eight players, and two gamepads should work.
+- `KikoGame` is built from public pieces (`KikoScreen`, `KikoStatus`, `KikoDirectionPad`,
+  `KikoActionButtons`, `Modifier.kikoKeys`, `KikoInput`), so an app can lay a player out its
+  own way. `pauseInBackground` and `requestFocus` turn off what it does on its own.
+- An internal constructor takes the game dispatcher, clock and save scope: `KikoPlayerTest`
+  plays on virtual time on every target, and exact frame rates are testable.
+
 ## Limits
 
 - On the web there is one thread: the game shares it with the page, and the watchdog only runs
@@ -61,6 +79,7 @@ Android's window mode.
 
 ## Demo
 
-`demo/` is an unpublished desktop window over `kiko-compose`: `./gradlew :demo:run`, or
-`--args="<cart>"`. With no file it plays `DemoCart.kt`, a small cart written for it, since real
-carts stay out of the repository.
+`demo/` is unpublished: a desktop window over `kiko-compose` (`./gradlew :demo:run`, or
+`--args="<cart>"`) and a browser page (`wasmJsMain`), which `pages.yml` publishes to GitHub Pages
+from `main`. Without a file it plays `DemoCart.kt`, a small cart written for it, since real carts
+stay out of the repository.

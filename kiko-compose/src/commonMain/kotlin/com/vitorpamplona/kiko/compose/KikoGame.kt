@@ -37,7 +37,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -46,25 +45,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.input.key.type
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleStartEffect
 import com.vitorpamplona.kiko.player.KikoPlayer
+import com.vitorpamplona.kiko.player.KikoPlayerHost
 import com.vitorpamplona.kiko.player.KikoSaveStore
-import com.vitorpamplona.kiko.runtime.ConsoleHost
 import kotlin.math.min
 
 /**
  * Plays the cart [source] supplies, the simplest way: loads it, shows it, takes the controls,
  * plays its sound, and pauses while the app is in the background. [source] returns the cart's
  * bytes (`.p8.png`, `.p8` or `.p8.rom`), or null when there are none; the game reloads when
- * [key] changes. See the [KikoPlayer] overload for an app that keeps the game itself.
+ * [key] changes. See the [KikoPlayer] overload for an app that keeps the game itself, and
+ * [KikoScreen], [KikoDirectionPad], [KikoActionButtons], [kikoKeys] and [KikoStatus] to lay a
+ * player out another way.
  */
 @Composable
 public fun KikoGame(
@@ -72,12 +66,14 @@ public fun KikoGame(
     modifier: Modifier = Modifier,
     key: Any? = Unit,
     saves: KikoSaveStore? = null,
-    labels: KikoLabels = KikoLabels(),
+    labels: KikoLabels = KikoLabels.Default,
     showTouchControls: Boolean = true,
+    pauseInBackground: Boolean = true,
+    requestFocus: Boolean = true,
     onExit: (() -> Unit)? = null,
 ) {
     val player = rememberKikoPlayer(key = key, saves = saves, source = source)
-    KikoGame(player, modifier, labels, showTouchControls, onExit)
+    KikoGame(player, modifier, labels, showTouchControls, pauseInBackground, requestFocus, onExit)
 }
 
 /**
@@ -89,13 +85,13 @@ public fun KikoGame(
 public fun rememberKikoPlayer(
     key: Any?,
     saves: KikoSaveStore? = null,
-    host: ConsoleHost? = null,
+    host: KikoPlayerHost? = null,
     source: suspend () -> ByteArray?,
 ): KikoPlayer {
     val currentSource by rememberUpdatedState(source)
     val player =
         remember(key) {
-            KikoPlayer(source = { currentSource() }, saves = saves, host = host ?: object : ConsoleHost {})
+            KikoPlayer(source = { currentSource() }, saves = saves, host = host ?: object : KikoPlayerHost {})
         }
     DisposableEffect(player) { onDispose { player.close() } }
     return player
@@ -103,9 +99,12 @@ public fun rememberKikoPlayer(
 
 /**
  * The game [player] runs: its screen as large as fits, an on-screen direction pad and O/X
- * buttons when [showTouchControls], and the keyboard or a gamepad (arrows, Z/C/N for O, X/V/M for
- * X, Enter or P to pause). The screen sits above the controls on a tall area and between them on
- * a wide one. The player runs while the app is in front and pauses when it is not.
+ * buttons when [showTouchControls], and the keyboard or a gamepad ([kikoKeys]). The screen sits
+ * above the controls on a tall area and between them on a wide one.
+ *
+ * The game runs while this is shown. With [pauseInBackground] it also pauses while the app is in
+ * the background (Home, a minimized window), which writes its saves before the system may kill
+ * the app. With [requestFocus] it takes the keyboard focus when it appears.
  *
  * Escape (and a key-event Back) opens the game's pause menu; pressed again it calls [onExit], or
  * closes the menu when there is none. The system Back gesture is the app's to route: call
@@ -116,29 +115,25 @@ public fun rememberKikoPlayer(
 public fun KikoGame(
     player: KikoPlayer,
     modifier: Modifier = Modifier,
-    labels: KikoLabels = KikoLabels(),
+    labels: KikoLabels = KikoLabels.Default,
     showTouchControls: Boolean = true,
+    pauseInBackground: Boolean = true,
+    requestFocus: Boolean = true,
     onExit: (() -> Unit)? = null,
 ) {
-    // Runs only while the app is in front: Home or a minimized window pauses the game and its
-    // sound, and writes its saves before the system may kill the app.
-    LifecycleStartEffect(player) {
-        player.resume()
-        onStopOrDispose { player.pause() }
+    if (pauseInBackground) {
+        LifecycleStartEffect(player) {
+            player.resume()
+            onStopOrDispose { player.pause() }
+        }
+    } else {
+        DisposableEffect(player) {
+            player.resume()
+            onDispose { player.pause() }
+        }
     }
-    val status by player.status.collectAsState()
-    val frame = player.frame.collectAsState()
 
-    // Plain holders, sent on every change: an effect keyed on them would merge a quick tap's
-    // press and release into one recomposition and the game would never see the press.
-    val held = remember(player) { HeldButtons() }
-    val send = { player.setButtons(held.mask) }
-    // A tick for each change the thumb makes: a touch screen gives it nothing else to feel.
-    val haptics = LocalHapticFeedback.current
-    val tick = { haptics.performHapticFeedback(HapticFeedbackType.VirtualKey) }
-    // Buttons tick when one goes down; the pad on every new direction, diagonals included, but not on letting go.
-    val tickIfPressed = { before: Int, now: Int -> if (now and before.inv() != 0) tick() }
-    val tickIfTurned = { before: Int, now: Int -> if (now != before && now != 0) tick() }
+    val input = rememberKikoInput(player)
     val currentOnExit by rememberUpdatedState(onExit)
     val back = {
         if (!player.openPauseMenu()) {
@@ -148,94 +143,48 @@ public fun KikoGame(
     }
 
     val focus = remember { FocusRequester() }
-    LaunchedEffect(Unit) { focus.requestFocus() }
+    if (requestFocus) LaunchedEffect(Unit) { focus.requestFocus() }
 
     Box(
         modifier
             .background(Color.Black)
             .focusRequester(focus)
-            .focusable()
-            .onKeyEvent { event ->
-                if (event.key == Key.Escape || event.key == Key.Back) {
-                    if (event.type == KeyEventType.KeyUp) back()
-                    return@onKeyEvent true
-                }
-                // Games that read the keyboard get every key typed, buttons included, as on the original.
-                if (event.type == KeyEventType.KeyDown) typedText(event)?.let(player::type)
-                val bit = KEY_BITS[event.key] ?: return@onKeyEvent false
-                held.keys =
-                    when (event.type) {
-                        KeyEventType.KeyDown -> held.keys or bit
-                        KeyEventType.KeyUp -> held.keys and bit.inv()
-                        else -> held.keys
-                    }
-                send()
-                true
-            },
+            .kikoKeys(input, onBack = back)
+            .focusable(),
     ) {
         BoxWithConstraints(Modifier.fillMaxSize()) {
             val wide = maxWidth > maxHeight
             val control = min(maxWidth.value, maxHeight.value).coerceIn(120f, 200f).dp * if (wide) 0.9f else 0.8f
-            val pad: @Composable () -> Unit = {
-                DirectionPad(
-                    onChange = {
-                        tickIfTurned(held.pad, it)
-                        held.pad = it
-                        send()
-                    },
-                    description = labels.directionPad,
-                    modifier = Modifier.size(control),
-                )
-            }
-            val actions: @Composable () -> Unit = {
-                ActionButtons(
-                    size = control,
-                    onChange = {
-                        tickIfPressed(held.actions, it)
-                        held.actions = it
-                        send()
-                    },
-                    description = labels.actionButtons,
-                )
-            }
-            if (!showTouchControls) {
-                GameScreen(frame, player, Modifier.fillMaxSize())
-            } else if (wide) {
-                Row(
-                    Modifier.fillMaxSize().padding(horizontal = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    pad()
-                    GameScreen(frame, player, Modifier.weight(1f).aspectRatio(1f, matchHeightConstraintsFirst = true))
-                    actions()
-                }
-            } else {
-                Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Spacer(Modifier.height(48.dp))
-                    GameScreen(frame, player, Modifier.fillMaxWidth().aspectRatio(1f))
-                    Spacer(Modifier.weight(1f))
+            when {
+                !showTouchControls -> KikoScreen(player, Modifier.fillMaxSize())
+                wide ->
                     Row(
-                        Modifier.fillMaxWidth().padding(horizontal = 24.dp),
+                        Modifier.fillMaxSize().padding(horizontal = 16.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween,
                     ) {
-                        pad()
-                        actions()
+                        KikoDirectionPad(input, Modifier.size(control), labels.directionPad)
+                        KikoScreen(player, Modifier.weight(1f).aspectRatio(1f, matchHeightConstraintsFirst = true))
+                        KikoActionButtons(input, Modifier.size(control), labels.actionButtons)
                     }
-                    Spacer(Modifier.height(24.dp))
-                }
+                else ->
+                    Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Spacer(Modifier.height(48.dp))
+                        KikoScreen(player, Modifier.fillMaxWidth().aspectRatio(1f))
+                        Spacer(Modifier.weight(1f))
+                        Row(
+                            Modifier.fillMaxWidth().padding(horizontal = 24.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                        ) {
+                            KikoDirectionPad(input, Modifier.size(control), labels.directionPad)
+                            KikoActionButtons(input, Modifier.size(control), labels.actionButtons)
+                        }
+                        Spacer(Modifier.height(24.dp))
+                    }
             }
         }
 
-        StatusOverlay(status, labels)
+        KikoStatus(player, Modifier.fillMaxSize(), labels)
     }
-}
-
-/** What each control holds down, as button bits. */
-private class HeldButtons {
-    var pad = 0
-    var actions = 0
-    var keys = 0
-    val mask get() = pad or actions or keys
 }

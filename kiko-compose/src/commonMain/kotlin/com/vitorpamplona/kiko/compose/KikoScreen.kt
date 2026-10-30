@@ -22,7 +22,7 @@ package com.vitorpamplona.kiko.compose
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.FilterQuality
@@ -40,16 +40,18 @@ import kotlin.math.floor
 import kotlin.math.min
 
 /**
- * The 128x128 screen, as large as fits, scaled by a whole number when there is room so pixels
- * stay square. The pointer over it (a mouse, or a finger on a touch screen) goes to the game in
- * game pixels, for games that read it.
+ * The game's 128x128 screen, as large as fits in [modifier]'s area, scaled by a whole number when
+ * there is room so pixels stay square. The pointer over it (a mouse, or a finger on a touch
+ * screen) goes to the game in game pixels, for games that read it. A new frame redraws it
+ * without recomposing.
  */
 @Composable
-internal fun GameScreen(
-    frame: State<KikoPlayer.Frame?>,
+public fun KikoScreen(
     player: KikoPlayer,
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
 ) {
+    val frameNumber = player.frameNumber.collectAsState()
+    val pixels = remember { IntArray(SCREEN_SIZE * SCREEN_SIZE) }
     val bitmap = remember { newScreenBitmap() }
     Canvas(
         modifier.pointerInput(player) {
@@ -79,8 +81,8 @@ internal fun GameScreen(
         },
     ) {
         // Read here, not in composition: a new frame redraws without recomposing.
-        val current = frame.value ?: return@Canvas
-        val image = bitmap.update(current.pixels)
+        if (frameNumber.value == 0L || player.copyFrame(pixels) == 0L) return@Canvas
+        val image = bitmap.update(pixels)
         val (left, top, side) = screenRect(size.width, size.height)
         drawImage(
             image = image,

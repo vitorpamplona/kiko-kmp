@@ -58,7 +58,21 @@ KikoGame(
 
 An app that keeps the game across an Android configuration change holds a `KikoPlayer` in its
 ViewModel and passes it to `KikoGame(player)`. `KikoLabels` carries the app's translations, and a
-`KikoSaveStore` keeps what games save.
+`KikoSaveStore` keeps what games save. `pauseInBackground` and `requestFocus` turn off the two
+things `KikoGame` does on its own.
+
+For a layout of your own, `KikoGame` is made of pieces you can use directly:
+
+```kotlin
+val player = rememberKikoPlayer(key = url) { httpClient.get(url) }
+val input = rememberKikoInput(player) // one player's buttons, from every control
+Box(Modifier.kikoKeys(input, onBack = { … }).focusable()) {
+    KikoScreen(player, Modifier.fillMaxSize())
+    KikoStatus(player, Modifier.fillMaxSize())
+}
+KikoDirectionPad(input, Modifier.size(160.dp))
+KikoActionButtons(input, Modifier.size(160.dp))
+```
 
 ### Without UI
 
@@ -68,8 +82,9 @@ import com.vitorpamplona.kiko.runtime.Buttons
 
 val player = KikoPlayer(source = { File(path).readBytes() }, saves = mySaveStore)
 player.resume() // loads, then runs on its own thread at the game's frame rate
-player.frame.collect { frame -> draw(frame.pixels) } // 128x128 ARGB
-player.setButtons(Buttons.LEFT or Buttons.O)
+val pixels = IntArray(128 * 128)
+player.frameNumber.collect { player.copyFrame(pixels); draw(pixels) } // ARGB, your own buffer
+player.setButtons(Buttons.LEFT or Buttons.O) // player 1; setButtons(mask, playerIndex = 1) for 2
 player.pause() // when the app goes to the background; close() when done
 ```
 
@@ -139,10 +154,12 @@ allows instead of slowing down). Design notes: [`plans/`](plans).
 ```bash
 ./gradlew :demo:run                          # a small game written for the demo
 ./gradlew :demo:run --args="/path/to/game.p8.png"
+./gradlew :demo:wasmJsBrowserDevelopmentRun  # the same demo in a browser
 ```
 
-The demo is a desktop window over `kiko-compose`; File > Open plays another cart. It is not
-published.
+The demo is a desktop window over `kiko-compose` (File > Open plays another cart), and a web page
+that plays its own cart; the `pages.yml` workflow publishes the page to GitHub Pages from `main`.
+It is not published to Maven.
 
 ## Building
 

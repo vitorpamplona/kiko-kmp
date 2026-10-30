@@ -20,14 +20,30 @@
  */
 package com.vitorpamplona.kiko.compose
 
+import androidx.compose.foundation.focusable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.ImageComposeScene
+import androidx.compose.ui.InternalComposeUiApi
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.unit.Density
 import com.vitorpamplona.kiko.player.KikoPlayer
+import com.vitorpamplona.kiko.player.KikoPlayerHost
 import org.jetbrains.skia.Bitmap
 import org.jetbrains.skia.Image
+import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 /**
  * [KikoGame] end to end in an off-screen scene: the one-call overload loads a cart, the player
@@ -81,14 +97,14 @@ class KikoGameTest {
     }
 
     @Test
-    fun bytesThatAreNotACartSaySo() {
+    fun bytesThatAreNotACartFail() {
         var player: KikoPlayer? = null
         scene =
             ImageComposeScene(width = 300, height = 500, density = Density(1f)) {
                 player = rememberKikoPlayer(key = Unit) { "not a cart".encodeToByteArray() }.also { KikoGame(it) }
             }
-        renderUntil { player?.status?.value == KikoPlayer.Status.NotACart }
-        assertEquals(KikoPlayer.Status.NotACart, player?.status?.value)
+        renderUntil { player?.status?.value == KikoPlayer.Status.Failed(KikoPlayer.Reason.NOT_A_CART) }
+        assertEquals(KikoPlayer.Status.Failed(KikoPlayer.Reason.NOT_A_CART), player?.status?.value)
     }
 
     @Test
@@ -98,12 +114,58 @@ class KikoGameTest {
             ImageComposeScene(width = 300, height = 500, density = Density(1f)) {
                 player = rememberKikoPlayer(key = Unit) { cart("function _draw() cls(8) end") }.also { KikoGame(it) }
             }
-        renderUntil { (player?.frame?.value?.number ?: 0) > 3 }
+        renderUntil { (player?.frameNumber?.value ?: 0) > 3 }
         scene.close()
         closed = true
-        val last = player?.frame?.value?.number
+        val last = player?.frameNumber?.value
         Thread.sleep(300)
-        assertEquals(last, player?.frame?.value?.number)
+        assertEquals(last, player?.frameNumber?.value)
+    }
+
+    // Building a KeyEvent by hand is compose-ui's internal API; fine for a test of the same version.
+    @OptIn(InternalComposeUiApi::class)
+    @Test
+    fun theBuildingBlocksPlayInALayoutOfTheirOwn() {
+        val log = CopyOnWriteArrayList<String>()
+        var player: KikoPlayer? = null
+        scene =
+            ImageComposeScene(width = 512, height = 512, density = Density(1f)) {
+                val host =
+                    remember {
+                        object : KikoPlayerHost {
+                            override fun log(message: String) {
+                                log.add(message)
+                            }
+                        }
+                    }
+                val game =
+                    rememberKikoPlayer(key = Unit, host = host) {
+                        cart("function _update() if (btn(4)) printh('o') end function _draw() cls(8) end")
+                    }
+                player = game
+                DisposableEffect(game) {
+                    game.resume()
+                    onDispose { game.pause() }
+                }
+                val input = rememberKikoInput(game)
+                val focus = remember { FocusRequester() }
+                LaunchedEffect(Unit) { focus.requestFocus() }
+                Box(
+                    Modifier
+                        .fillMaxSize()
+                        .focusRequester(focus)
+                        .kikoKeys(input, onBack = {})
+                        .focusable(),
+                ) {
+                    KikoScreen(game, Modifier.fillMaxSize())
+                    KikoStatus(game, Modifier.fillMaxSize())
+                }
+            }
+        val image = renderUntil { it.argbAt(256, 256) == RED }
+        assertEquals(RED, image.argbAt(256, 256))
+        scene.sendKeyEvent(KeyEvent(Key.Z, KeyEventType.KeyDown))
+        renderUntil { "o" in log }
+        assertTrue("o" in log, "$log")
     }
 
     private companion object {

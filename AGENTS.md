@@ -25,26 +25,33 @@ and moved here so any app can embed it.
 - `kiko/api/` — the public ABI dump (`checkKotlinAbi`).
 - `kiko-player/` — `com.vitorpamplona.kiko.player`, on kiko and kotlinx.coroutines: `KikoPlayer`
   (loads a cart from a `source` lambda, runs it on a game thread at its frame rate, publishes
-  `status` and `frame` StateFlows, takes input from any thread, a watchdog for frames that never
-  end), `KikoSaveStore` and the internal `SaveBuffer` (debounced writes, a cap on new save ids),
-  `KikoAudioSink`. Platform code: the game thread and heap check (`jvmAndroidMain`, `nativeMain`,
-  `webMain`), the sound output (`AudioTrack` on Android, `javax.sound` on the JVM, none elsewhere).
+  `status` and `frameNumber`, hands frames out with `copyFrame` into the caller's buffer, takes
+  input for eight players from any thread, a watchdog for frames that never end), `KikoPlayerHost`
+  (log, time zone, other carts), `KikoSaveStore` and the internal `SaveBuffer` (debounced writes, a
+  cap on new save ids), `KikoAudioSink`. An internal constructor takes the game dispatcher, clock
+  and save scope, so tests run on virtual time. Platform code: the game thread and heap check
+  (`jvmAndroidMain`, `nativeMain`, `webMain`), the sound output (`AudioTrack` on Android,
+  `javax.sound` on the JVM, none elsewhere).
 - `kiko-compose/` — `com.vitorpamplona.kiko.compose`, on kiko-player, Compose ui/foundation and
   lifecycle-runtime-compose: `KikoGame` (two overloads: a `source` lambda, or a `KikoPlayer` the
-  app keeps), `rememberKikoPlayer`, `KikoLabels`; internally the screen, the touch controls
-  (`DirectionPad`, `ActionButtons`), the key map and the frame bitmap (`androidMain`, `skikoMain`).
-  No Material, no string resources, no app chrome.
-- `demo/` — a desktop window over kiko-compose (`./gradlew :demo:run [--args=<cart>]`), with a
-  small cart of our own (`DemoCart.kt`). Not published.
+  app keeps) built from public pieces an app may lay out itself: `KikoScreen`, `KikoStatus`,
+  `KikoDirectionPad`, `KikoActionButtons`, `Modifier.kikoKeys`, joined by `KikoInput`
+  (`rememberKikoInput`). Also `rememberKikoPlayer` and `KikoLabels`. Platform code: the frame
+  bitmap and edge-gesture exclusion (`androidMain`, `skikoMain`). No Material, no string
+  resources, no app chrome.
+- `demo/` — kiko-compose on the desktop (`./gradlew :demo:run [--args=<cart>]`) and in a browser
+  (`wasmJsMain`, `:demo:wasmJsBrowserDevelopmentRun`; `pages.yml` publishes it), with a small cart
+  of our own (`DemoCart.kt`). Not published to Maven.
 - `plans/` — design notes, `YYYY-MM-DD-<slug>.md`.
 - `tools/agent-hooks/` — the checks Claude Code and Codex run before a push (see below).
 
-Tests: kiko's `commonTest` runs on every target (language, fixed point, graphics, console
-features); `jvmTest` holds what needs the JVM: `PngCartTest` (a cart written by the JDK's PNG
-encoder), `HostileCartTest` (crafted input that must fail cleanly) and `CartSmokeTest`, which
-plays a folder of real carts given with `-Dkiko.carts=<dir>` and skips itself otherwise. kiko-player's
-`SaveBufferTest` runs everywhere and `KikoPlayerTest` (real threads and time) on the JVM;
-kiko-compose's `ControlsTouchTest` and `KikoGameTest` draw off screen with Skia on the JVM.
+Tests: kiko's `commonTest` runs on every target (language, fixed point, graphics, console features);
+`jvmTest` holds what needs the JVM: `PngCartTest` (a cart written by the JDK's PNG encoder),
+`HostileCartTest` (crafted input that must fail cleanly) and `CartSmokeTest`, which plays a folder
+of real carts given with `-Dkiko.carts=<dir>` and skips itself otherwise. kiko-player's
+`SaveBufferTest` and `KikoPlayerTest` (virtual time) run everywhere, `KikoPlayerThreadTest` (a real
+thread, a frame that never returns) on the JVM; kiko-compose's `ControlsTouchTest` and
+`KikoGameTest` draw off screen with Skia on the JVM.
 
 ## Rules
 
@@ -85,8 +92,9 @@ kiko-compose's `ControlsTouchTest` and `KikoGameTest` draw off screen with Skia 
   `public`, and each module's `api/` folder records its public ABI. A deliberate API change runs
   `./gradlew updateKotlinAbi` and commits the new dumps; anything that should not be API is
   `internal`. Keep kiko's public surface to `cart` and `FantasyConsole`/`ConsoleHost`/`Buttons`,
-  kiko-player's to `KikoPlayer` and its two interfaces, and kiko-compose's to `KikoGame`,
-  `rememberKikoPlayer` and `KikoLabels`.
+  kiko-player's to `KikoPlayer` and its three interfaces, and kiko-compose's to `KikoGame`, its
+  pieces (`KikoScreen`, `KikoStatus`, `KikoDirectionPad`, `KikoActionButtons`, `kikoKeys`,
+  `KikoInput`), `rememberKikoPlayer` and `KikoLabels`.
 - JVM target is 17: a library can't need a newer JVM than the apps that use it.
 - Commits: conventional commits (`feat:`, `fix:`, …). Never `--no-verify`.
 
@@ -107,6 +115,7 @@ the screenshots it writes.
 ./gradlew :kiko:checkKotlinAbi                  # :kiko:updateKotlinAbi after a deliberate change
 ./gradlew :kiko-player:jvmTest :kiko-compose:jvmTest :demo:jvmTest
 ./gradlew :demo:run --args="<cart>"             # try a cart in a window
+./gradlew :demo:wasmJsBrowserDevelopmentRun     # ...or in a browser
 ./gradlew :kiko:testAndroidHostTest :kiko:linuxX64Test :kiko:jsNodeTest :kiko:wasmJsNodeTest
 ./gradlew :kiko:iosSimulatorArm64Test :kiko:macosArm64Test   # macOS only
 # Real carts, with a screenshot of each in <out>:

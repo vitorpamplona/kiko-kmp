@@ -85,7 +85,7 @@ class ControlsTouchTest {
     fun aThumbRollsFromOToXThroughBoth() {
         scene =
             ImageComposeScene(width = 300, height = 300, density = Density(1f)) {
-                ActionButtons(size = 200.dp, onChange = { seen.add(it) }, description = "buttons")
+                ActionButtons(onChange = { seen.add(it) }, description = "buttons", modifier = Modifier.size(200.dp))
             }
         frame()
         // O sits low left, X high right; halfway between them presses both.

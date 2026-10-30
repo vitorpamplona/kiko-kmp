@@ -59,7 +59,7 @@ jobs:
         run: ./gradlew :kiko:compileCommonMainKotlinMetadata :kiko-player:compileCommonMainKotlinMetadata :kiko-compose:compileCommonMainKotlinMetadata :kiko-compose:compileSkikoMainKotlinMetadata
 
       - name: Build (gradle)
-        run: ./gradlew assemble
+        run: ./gradlew assemble :demo:wasmJsBrowserDistribution
 
   # Apple test binaries link and run only on macOS.
   test-apple:

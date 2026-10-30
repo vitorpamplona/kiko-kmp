@@ -29,9 +29,15 @@ import androidx.compose.runtime.Immutable
 @Immutable
 public class KikoLabels(
     public val loading: String = "Loading the game…",
-    public val notACart: String = "This is not a game cartridge, or it could not be loaded.",
+    public val noCart: String = "The game could not be loaded.",
+    public val notACart: String = "This is not a game cartridge.",
     public val gameEnded: String = "The game ended.",
     public val gameError: String = "The game stopped with an error.",
     public val directionPad: String = "Direction pad",
     public val actionButtons: String = "O button, X button",
-)
+) {
+    public companion object {
+        /** The English words. */
+        public val Default: KikoLabels = KikoLabels()
+    }
+}

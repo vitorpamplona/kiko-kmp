@@ -1,3 +1,4 @@
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -6,8 +7,9 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
 }
 
-// A desktop window that plays a cart with kiko-compose, to try the library without an app of
-// your own: `./gradlew :demo:run`, or `./gradlew :demo:run --args="<cart>"`. Not published.
+// Plays a cart with kiko-compose, to try the library without an app of your own. Not published.
+//   Desktop: ./gradlew :demo:run, or ./gradlew :demo:run --args="<cart>"
+//   Browser: ./gradlew :demo:wasmJsBrowserDevelopmentRun (the Pages workflow publishes it)
 kotlin {
     jvm {
         compilerOptions {
@@ -15,10 +17,26 @@ kotlin {
         }
     }
 
+    @OptIn(ExperimentalWasmDsl::class)
+    wasmJs {
+        browser {
+            commonWebpackConfig {
+                outputFileName = "demo.js"
+            }
+        }
+        binaries.executable()
+    }
+
     sourceSets {
-        jvmMain {
+        commonMain {
             dependencies {
                 implementation(project(":kiko-compose"))
+                implementation(libs.compose.foundation)
+            }
+        }
+
+        jvmMain {
+            dependencies {
                 implementation(compose.desktop.currentOs)
             }
         }

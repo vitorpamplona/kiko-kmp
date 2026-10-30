@@ -21,7 +21,6 @@
 package com.vitorpamplona.kiko.compose
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -35,14 +34,59 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import com.vitorpamplona.kiko.runtime.Buttons
 import kotlin.math.abs
 import kotlin.math.min
+
+/**
+ * A direction pad for [input]: a cross that reads every finger on it, so a thumb slides between
+ * directions and diagonals without lifting. Give it a square size with [modifier]. Each new
+ * direction ticks the haptics; letting go does not. Android's edge gestures stay off it.
+ */
+@Composable
+public fun KikoDirectionPad(
+    input: KikoInput,
+    modifier: Modifier = Modifier,
+    description: String = KikoLabels.Default.directionPad,
+) {
+    val haptics = LocalHapticFeedback.current
+    DirectionPad(
+        onChange = {
+            if (it != input.pad && it != 0) haptics.performHapticFeedback(HapticFeedbackType.VirtualKey)
+            input.pad = it
+        },
+        description = description,
+        modifier = modifier,
+    )
+}
+
+/**
+ * The O and X buttons for [input], staggered like a handheld (O low on the left, X high on the
+ * right) and read as one area: a thumb rolls from one to the other, and the strip between them
+ * presses both. Give it a square size with [modifier]. A button going down ticks the haptics.
+ */
+@Composable
+public fun KikoActionButtons(
+    input: KikoInput,
+    modifier: Modifier = Modifier,
+    description: String = KikoLabels.Default.actionButtons,
+) {
+    val haptics = LocalHapticFeedback.current
+    ActionButtons(
+        onChange = {
+            if (it and input.actions.inv() != 0) haptics.performHapticFeedback(HapticFeedbackType.VirtualKey)
+            input.actions = it
+        },
+        description = description,
+        modifier = modifier,
+    )
+}
 
 private val ControlColor = Color.White.copy(alpha = 0.22f)
 private val PressedColor = Color.White.copy(alpha = 0.55f)
@@ -119,14 +163,13 @@ private const val TAN_22_5 = 0.4142f
  */
 @Composable
 internal fun ActionButtons(
-    size: Dp,
     onChange: (Int) -> Unit,
     description: String,
+    modifier: Modifier,
 ) {
     var held by remember { mutableIntStateOf(0) }
     Canvas(
-        Modifier
-            .size(size)
+        modifier
             .claimSystemGestures()
             .semantics { contentDescription = description }
             .pointerInput(Unit) {
