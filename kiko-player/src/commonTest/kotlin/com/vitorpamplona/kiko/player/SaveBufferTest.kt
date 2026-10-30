@@ -95,7 +95,13 @@ class SaveBufferTest {
             for (i in 0 until 100) saves.save("id$i", values(i))
             saves.flush()
             runCurrent()
-            assertEquals(8, store.writes.flatMap { it.keys }.toSet().size)
+            assertEquals(
+                8,
+                store.writes
+                    .flatMap { it.keys }
+                    .toSet()
+                    .size,
+            )
             assertNull(saves.get("id8"))
         }
 
