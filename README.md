@@ -1,4 +1,4 @@
-# kiko-kmp
+# Kiko: Pico-8 Player in Kotlin Multiplatform
 
 [![Last Version](https://img.shields.io/github/release/vitorpamplona/kiko-kmp.svg?maxAge=3600&label=Stable&labelColor=06599d&color=043b69)](https://github.com/vitorpamplona/kiko-kmp/releases/latest)
 [![Maven Central](https://img.shields.io/maven-central/v/com.vitorpamplona.kiko/kiko?label=Maven%20Central&labelColor=27303D&color=0877d2)](https://central.sonatype.com/artifact/com.vitorpamplona.kiko/kiko)
