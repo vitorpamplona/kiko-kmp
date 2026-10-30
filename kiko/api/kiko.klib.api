@@ -82,6 +82,8 @@ final class com.vitorpamplona.kiko.runtime/FantasyConsole { // com.vitorpamplona
             final fun <get-RECOMMENDED_STACK_BYTES>(): kotlin/Long // com.vitorpamplona.kiko.runtime/FantasyConsole.Companion.RECOMMENDED_STACK_BYTES.<get-RECOMMENDED_STACK_BYTES>|<get-RECOMMENDED_STACK_BYTES>(){}[0]
         final const val SAMPLE_RATE // com.vitorpamplona.kiko.runtime/FantasyConsole.Companion.SAMPLE_RATE|{}SAMPLE_RATE[0]
             final fun <get-SAMPLE_RATE>(): kotlin/Int // com.vitorpamplona.kiko.runtime/FantasyConsole.Companion.SAMPLE_RATE.<get-SAMPLE_RATE>|<get-SAMPLE_RATE>(){}[0]
+        final const val SCREEN_SIZE // com.vitorpamplona.kiko.runtime/FantasyConsole.Companion.SCREEN_SIZE|{}SCREEN_SIZE[0]
+            final fun <get-SCREEN_SIZE>(): kotlin/Int // com.vitorpamplona.kiko.runtime/FantasyConsole.Companion.SCREEN_SIZE.<get-SCREEN_SIZE>|<get-SCREEN_SIZE>(){}[0]
     }
 }
 
@@ -104,4 +106,21 @@ final object com.vitorpamplona.kiko.cart/CartLoader { // com.vitorpamplona.kiko.
 final object com.vitorpamplona.kiko.cart/P8scii { // com.vitorpamplona.kiko.cart/P8scii|null[0]
     final fun fromUnicode(kotlin/String): kotlin/String // com.vitorpamplona.kiko.cart/P8scii.fromUnicode|fromUnicode(kotlin.String){}[0]
     final fun toUnicode(kotlin/String): kotlin/String // com.vitorpamplona.kiko.cart/P8scii.toUnicode|toUnicode(kotlin.String){}[0]
+}
+
+final object com.vitorpamplona.kiko.runtime/Buttons { // com.vitorpamplona.kiko.runtime/Buttons|null[0]
+    final const val DOWN // com.vitorpamplona.kiko.runtime/Buttons.DOWN|{}DOWN[0]
+        final fun <get-DOWN>(): kotlin/Int // com.vitorpamplona.kiko.runtime/Buttons.DOWN.<get-DOWN>|<get-DOWN>(){}[0]
+    final const val LEFT // com.vitorpamplona.kiko.runtime/Buttons.LEFT|{}LEFT[0]
+        final fun <get-LEFT>(): kotlin/Int // com.vitorpamplona.kiko.runtime/Buttons.LEFT.<get-LEFT>|<get-LEFT>(){}[0]
+    final const val O // com.vitorpamplona.kiko.runtime/Buttons.O|{}O[0]
+        final fun <get-O>(): kotlin/Int // com.vitorpamplona.kiko.runtime/Buttons.O.<get-O>|<get-O>(){}[0]
+    final const val PAUSE // com.vitorpamplona.kiko.runtime/Buttons.PAUSE|{}PAUSE[0]
+        final fun <get-PAUSE>(): kotlin/Int // com.vitorpamplona.kiko.runtime/Buttons.PAUSE.<get-PAUSE>|<get-PAUSE>(){}[0]
+    final const val RIGHT // com.vitorpamplona.kiko.runtime/Buttons.RIGHT|{}RIGHT[0]
+        final fun <get-RIGHT>(): kotlin/Int // com.vitorpamplona.kiko.runtime/Buttons.RIGHT.<get-RIGHT>|<get-RIGHT>(){}[0]
+    final const val UP // com.vitorpamplona.kiko.runtime/Buttons.UP|{}UP[0]
+        final fun <get-UP>(): kotlin/Int // com.vitorpamplona.kiko.runtime/Buttons.UP.<get-UP>|<get-UP>(){}[0]
+    final const val X // com.vitorpamplona.kiko.runtime/Buttons.X|{}X[0]
+        final fun <get-X>(): kotlin/Int // com.vitorpamplona.kiko.runtime/Buttons.X.<get-X>|<get-X>(){}[0]
 }

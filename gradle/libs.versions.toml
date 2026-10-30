@@ -1,5 +1,10 @@
 [versions]
 agp = "9.4.1"
+# kiko-player and kiko-compose only (kiko itself stays on the stdlib). Keep these at or below
+# Amethyst's: a library pinning a newer one forces every app that uses it to upgrade.
+composeMultiplatform = "1.12.2"
+kotlinxCoroutines = "1.11.0"
+lifecycle = "2.11.0"
 android-compileSdk = "37"
 android-minSdk = "26"
 kotlin = "2.4.21"
@@ -7,10 +12,18 @@ mavenPublish = "0.37.0"
 spotless = "8.10.4"
 
 [libraries]
+compose-foundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "composeMultiplatform" }
+compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "composeMultiplatform" }
+compose-ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "composeMultiplatform" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
+lifecycle-runtime-compose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycle" }
 
 [plugins]
 androidKotlinMultiplatformLibrary = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
+composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "composeMultiplatform" }
 diffplugSpotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 vanniktech-mavenPublish = { id = "com.vanniktech.maven.publish", version.ref = "mavenPublish" }

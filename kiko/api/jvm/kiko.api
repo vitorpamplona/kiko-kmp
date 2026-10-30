@@ -33,6 +33,17 @@ public final class com/vitorpamplona/kiko/cart/P8scii {
 	public final fun toUnicode (Ljava/lang/String;)Ljava/lang/String;
 }
 
+public final class com/vitorpamplona/kiko/runtime/Buttons {
+	public static final field DOWN I
+	public static final field INSTANCE Lcom/vitorpamplona/kiko/runtime/Buttons;
+	public static final field LEFT I
+	public static final field O I
+	public static final field PAUSE I
+	public static final field RIGHT I
+	public static final field UP I
+	public static final field X I
+}
+
 public abstract interface class com/vitorpamplona/kiko/runtime/ConsoleHost {
 	public fun loadCart (Ljava/lang/String;)[B
 	public fun loadCartData (Ljava/lang/String;)[I
@@ -55,6 +66,7 @@ public final class com/vitorpamplona/kiko/runtime/FantasyConsole {
 	public static final field Companion Lcom/vitorpamplona/kiko/runtime/FantasyConsole$Companion;
 	public static final field RECOMMENDED_STACK_BYTES J
 	public static final field SAMPLE_RATE I
+	public static final field SCREEN_SIZE I
 	public fun <init> (Lcom/vitorpamplona/kiko/cart/Cart;Lcom/vitorpamplona/kiko/runtime/ConsoleHost;)V
 	public synthetic fun <init> (Lcom/vitorpamplona/kiko/cart/Cart;Lcom/vitorpamplona/kiko/runtime/ConsoleHost;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun abort ()V

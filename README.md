@@ -11,9 +11,16 @@ Kotlin Multiplatform: its own Lua interpreter with 16:16 fixed-point numbers, th
 map, graphics, text, sound, input, pause menu and cart formats. It depends on nothing but the
 Kotlin stdlib and runs on the JVM, Android, iOS, macOS, Linux, JavaScript and Wasm.
 
-It is headless: your app calls `step()` once per frame, draws the 128x128 pixels it renders and
-plays the samples it mixes. [Amethyst](https://github.com/vitorpamplona/amethyst) uses it to play
-carts posted on Nostr inside the app.
+It comes in three artifacts, so an app takes only what it needs:
+
+| Artifact | Depends on | What it does |
+|---|---|---|
+| `kiko` | the Kotlin stdlib | Runs one cart: your app calls `step()` once per frame, draws the pixels and plays the samples. |
+| `kiko-player` | `kiko`, kotlinx.coroutines | Plays it in real time without UI: the game thread, the frame clock, a hang watchdog, saves and the device's sound. |
+| `kiko-compose` | `kiko-player`, Compose Multiplatform | One composable, `KikoGame`, with the screen, touch controls, keyboard and gamepad, pausing with the app. |
+
+[Amethyst](https://github.com/vitorpamplona/amethyst) uses them to play carts posted on Nostr
+inside the app.
 
 Written from scratch from the public manual and community documentation of the formats. It is not
 affiliated with the makers of any console, and contains none of their code or assets.
@@ -22,7 +29,7 @@ affiliated with the makers of any console, and contains none of their code or as
 
 ```kotlin
 dependencies {
-    implementation("com.vitorpamplona.kiko:kiko:<version>")
+    implementation("com.vitorpamplona.kiko:kiko-compose:<version>") // or kiko-player, or kiko
 }
 ```
 
@@ -30,11 +37,43 @@ dependencies {
 |---|---|
 | JVM | Java 17 |
 | Android | minSdk 26 |
-| Apple | iosArm64, iosSimulatorArm64, macosArm64 |
-| Linux | linuxX64 |
-| Web | js and wasmJs, in browsers and Node.js |
+| Apple | iosArm64, iosSimulatorArm64, macosArm64 (`kiko-compose`: iOS only) |
+| Linux | linuxX64 (not `kiko-compose`) |
+| Web | js and wasmJs, in browsers and Node.js (`kiko-compose`: browsers) |
 
 ## Usage
+
+### In Compose
+
+```kotlin
+import com.vitorpamplona.kiko.compose.KikoGame
+
+// Loads the cart, plays it with touch controls, keys and sound, and pauses in the background.
+KikoGame(
+    key = url,
+    source = { httpClient.get(url) }, // the cart's bytes, or null; kiko never downloads anything
+    modifier = Modifier.fillMaxSize(),
+)
+```
+
+An app that keeps the game across an Android configuration change holds a `KikoPlayer` in its
+ViewModel and passes it to `KikoGame(player)`. `KikoLabels` carries the app's translations, and a
+`KikoSaveStore` keeps what games save.
+
+### Without UI
+
+```kotlin
+import com.vitorpamplona.kiko.player.KikoPlayer
+import com.vitorpamplona.kiko.runtime.Buttons
+
+val player = KikoPlayer(source = { File(path).readBytes() }, saves = mySaveStore)
+player.resume() // loads, then runs on its own thread at the game's frame rate
+player.frame.collect { frame -> draw(frame.pixels) } // 128x128 ARGB
+player.setButtons(Buttons.LEFT or Buttons.O)
+player.pause() // when the app goes to the background; close() when done
+```
+
+### The runtime alone
 
 ```kotlin
 import com.vitorpamplona.kiko.cart.CartLoader
@@ -55,7 +94,7 @@ val console =
     )
 
 // On one thread with a FantasyConsole.RECOMMENDED_STACK_BYTES stack, every 1/console.fps s:
-console.setButtons(0, held) // bits: left, right, up, down, O, X, pause
+console.setButtons(0, held) // Buttons bits: LEFT, RIGHT, UP, DOWN, O, X, PAUSE
 console.step()
 console.render(pixels) // IntArray(128 * 128), ARGB, with the pause menu over it when open
 play(console.audioBuffer, console.audioSamples) // FantasyConsole.SAMPLE_RATE Hz mono floats
@@ -95,10 +134,20 @@ screen change. Known gaps: the sound filters (noise, buzz, detune, reverb, dampe
 the kana glyphs draw blank, and there is no CPU budget (a heavy cart runs as fast as the host
 allows instead of slowing down). Design notes: [`plans/`](plans).
 
+## Try it
+
+```bash
+./gradlew :demo:run                          # a small game written for the demo
+./gradlew :demo:run --args="/path/to/game.p8.png"
+```
+
+The demo is a desktop window over `kiko-compose`; File > Open plays another cart. It is not
+published.
+
 ## Building
 
 ```bash
-./gradlew :kiko:jvmTest
+./gradlew :kiko:jvmTest :kiko-player:jvmTest :kiko-compose:jvmTest
 # Play a folder of carts headless and keep a screenshot of each (carts are not in this repo):
 ./gradlew :kiko:jvmTest --tests '*CartSmokeTest*' -Dkiko.carts=/path/to/carts -Dkiko.out=/tmp/screens
 ```

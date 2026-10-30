@@ -1,0 +1,73 @@
+public abstract interface class com/vitorpamplona/kiko/player/KikoAudioSink {
+	public abstract fun close ()V
+	public abstract fun write ([FI)V
+}
+
+public final class com/vitorpamplona/kiko/player/KikoPlayer : java/lang/AutoCloseable {
+	public fun <init> (Lkotlin/jvm/functions/Function1;Lcom/vitorpamplona/kiko/player/KikoSaveStore;Lcom/vitorpamplona/kiko/runtime/ConsoleHost;Lkotlin/jvm/functions/Function1;)V
+	public synthetic fun <init> (Lkotlin/jvm/functions/Function1;Lcom/vitorpamplona/kiko/player/KikoSaveStore;Lcom/vitorpamplona/kiko/runtime/ConsoleHost;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun close ()V
+	public final fun getFrame ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun getStatus ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun openPauseMenu ()Z
+	public final fun pause ()V
+	public final fun resume ()V
+	public final fun scroll (I)V
+	public final fun setButtons (I)V
+	public final fun setPointer (III)V
+	public final fun tapPause ()V
+	public final fun type (Ljava/lang/String;)V
+}
+
+public final class com/vitorpamplona/kiko/player/KikoPlayer$Frame {
+	public fun <init> ([IJ)V
+	public final fun getNumber ()J
+	public final fun getPixels ()[I
+}
+
+public abstract interface class com/vitorpamplona/kiko/player/KikoPlayer$Status {
+}
+
+public final class com/vitorpamplona/kiko/player/KikoPlayer$Status$Loading : com/vitorpamplona/kiko/player/KikoPlayer$Status {
+	public static final field INSTANCE Lcom/vitorpamplona/kiko/player/KikoPlayer$Status$Loading;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/vitorpamplona/kiko/player/KikoPlayer$Status$NotACart : com/vitorpamplona/kiko/player/KikoPlayer$Status {
+	public static final field INSTANCE Lcom/vitorpamplona/kiko/player/KikoPlayer$Status$NotACart;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/vitorpamplona/kiko/player/KikoPlayer$Status$Playing : com/vitorpamplona/kiko/player/KikoPlayer$Status {
+	public static final field INSTANCE Lcom/vitorpamplona/kiko/player/KikoPlayer$Status$Playing;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/vitorpamplona/kiko/player/KikoPlayer$Status$Stopped : com/vitorpamplona/kiko/player/KikoPlayer$Status {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lcom/vitorpamplona/kiko/player/KikoPlayer$Status$Stopped;
+	public static synthetic fun copy$default (Lcom/vitorpamplona/kiko/player/KikoPlayer$Status$Stopped;Ljava/lang/String;ILjava/lang/Object;)Lcom/vitorpamplona/kiko/player/KikoPlayer$Status$Stopped;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getError ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class com/vitorpamplona/kiko/player/KikoSaveStore {
+	public static final field Companion Lcom/vitorpamplona/kiko/player/KikoSaveStore$Companion;
+	public static final field VALUES I
+	public abstract fun loadAll (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun save (Ljava/util/Map;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/vitorpamplona/kiko/player/KikoSaveStore$Companion {
+	public static final field VALUES I
+}
+

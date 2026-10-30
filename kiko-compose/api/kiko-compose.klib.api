@@ -1,0 +1,31 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64, js, wasmJs]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <kiko-kmp:kiko-compose>
+final class com.vitorpamplona.kiko.compose/KikoLabels { // com.vitorpamplona.kiko.compose/KikoLabels|null[0]
+    constructor <init>(kotlin/String = ..., kotlin/String = ..., kotlin/String = ..., kotlin/String = ..., kotlin/String = ..., kotlin/String = ...) // com.vitorpamplona.kiko.compose/KikoLabels.<init>|<init>(kotlin.String;kotlin.String;kotlin.String;kotlin.String;kotlin.String;kotlin.String){}[0]
+
+    final val actionButtons // com.vitorpamplona.kiko.compose/KikoLabels.actionButtons|{}actionButtons[0]
+        final fun <get-actionButtons>(): kotlin/String // com.vitorpamplona.kiko.compose/KikoLabels.actionButtons.<get-actionButtons>|<get-actionButtons>(){}[0]
+    final val directionPad // com.vitorpamplona.kiko.compose/KikoLabels.directionPad|{}directionPad[0]
+        final fun <get-directionPad>(): kotlin/String // com.vitorpamplona.kiko.compose/KikoLabels.directionPad.<get-directionPad>|<get-directionPad>(){}[0]
+    final val gameEnded // com.vitorpamplona.kiko.compose/KikoLabels.gameEnded|{}gameEnded[0]
+        final fun <get-gameEnded>(): kotlin/String // com.vitorpamplona.kiko.compose/KikoLabels.gameEnded.<get-gameEnded>|<get-gameEnded>(){}[0]
+    final val gameError // com.vitorpamplona.kiko.compose/KikoLabels.gameError|{}gameError[0]
+        final fun <get-gameError>(): kotlin/String // com.vitorpamplona.kiko.compose/KikoLabels.gameError.<get-gameError>|<get-gameError>(){}[0]
+    final val loading // com.vitorpamplona.kiko.compose/KikoLabels.loading|{}loading[0]
+        final fun <get-loading>(): kotlin/String // com.vitorpamplona.kiko.compose/KikoLabels.loading.<get-loading>|<get-loading>(){}[0]
+    final val notACart // com.vitorpamplona.kiko.compose/KikoLabels.notACart|{}notACart[0]
+        final fun <get-notACart>(): kotlin/String // com.vitorpamplona.kiko.compose/KikoLabels.notACart.<get-notACart>|<get-notACart>(){}[0]
+}
+
+final val com.vitorpamplona.kiko.compose/com_vitorpamplona_kiko_compose_KikoLabels$stableprop // com.vitorpamplona.kiko.compose/com_vitorpamplona_kiko_compose_KikoLabels$stableprop|#static{}com_vitorpamplona_kiko_compose_KikoLabels$stableprop[0]
+
+final fun com.vitorpamplona.kiko.compose/KikoGame(com.vitorpamplona.kiko.player/KikoPlayer, androidx.compose.ui/Modifier?, com.vitorpamplona.kiko.compose/KikoLabels?, kotlin/Boolean, kotlin/Function0<kotlin/Unit>?, androidx.compose.runtime/Composer?, kotlin/Int, kotlin/Int) // com.vitorpamplona.kiko.compose/KikoGame|KikoGame(com.vitorpamplona.kiko.player.KikoPlayer;androidx.compose.ui.Modifier?;com.vitorpamplona.kiko.compose.KikoLabels?;kotlin.Boolean;kotlin.Function0<kotlin.Unit>?;androidx.compose.runtime.Composer?;kotlin.Int;kotlin.Int){}[0]
+final fun com.vitorpamplona.kiko.compose/KikoGame(kotlin.coroutines/SuspendFunction0<kotlin/ByteArray?>, androidx.compose.ui/Modifier?, kotlin/Any?, com.vitorpamplona.kiko.player/KikoSaveStore?, com.vitorpamplona.kiko.compose/KikoLabels?, kotlin/Boolean, kotlin/Function0<kotlin/Unit>?, androidx.compose.runtime/Composer?, kotlin/Int, kotlin/Int) // com.vitorpamplona.kiko.compose/KikoGame|KikoGame(kotlin.coroutines.SuspendFunction0<kotlin.ByteArray?>;androidx.compose.ui.Modifier?;kotlin.Any?;com.vitorpamplona.kiko.player.KikoSaveStore?;com.vitorpamplona.kiko.compose.KikoLabels?;kotlin.Boolean;kotlin.Function0<kotlin.Unit>?;androidx.compose.runtime.Composer?;kotlin.Int;kotlin.Int){}[0]
+final fun com.vitorpamplona.kiko.compose/com_vitorpamplona_kiko_compose_KikoLabels$stableprop_getter(): kotlin/Int // com.vitorpamplona.kiko.compose/com_vitorpamplona_kiko_compose_KikoLabels$stableprop_getter|com_vitorpamplona_kiko_compose_KikoLabels$stableprop_getter(){}[0]
+final fun com.vitorpamplona.kiko.compose/rememberKikoPlayer(kotlin/Any?, com.vitorpamplona.kiko.player/KikoSaveStore?, com.vitorpamplona.kiko.runtime/ConsoleHost?, kotlin.coroutines/SuspendFunction0<kotlin/ByteArray?>, androidx.compose.runtime/Composer?, kotlin/Int, kotlin/Int): com.vitorpamplona.kiko.player/KikoPlayer // com.vitorpamplona.kiko.compose/rememberKikoPlayer|rememberKikoPlayer(kotlin.Any?;com.vitorpamplona.kiko.player.KikoSaveStore?;com.vitorpamplona.kiko.runtime.ConsoleHost?;kotlin.coroutines.SuspendFunction0<kotlin.ByteArray?>;androidx.compose.runtime.Composer?;kotlin.Int;kotlin.Int){}[0]

@@ -1,0 +1,19 @@
+public final class com/vitorpamplona/kiko/compose/KikoGameKt {
+	public static final fun KikoGame (Lcom/vitorpamplona/kiko/player/KikoPlayer;Landroidx/compose/ui/Modifier;Lcom/vitorpamplona/kiko/compose/KikoLabels;ZLkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;II)V
+	public static final fun KikoGame (Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Ljava/lang/Object;Lcom/vitorpamplona/kiko/player/KikoSaveStore;Lcom/vitorpamplona/kiko/compose/KikoLabels;ZLkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;II)V
+	public static final fun rememberKikoPlayer (Ljava/lang/Object;Lcom/vitorpamplona/kiko/player/KikoSaveStore;Lcom/vitorpamplona/kiko/runtime/ConsoleHost;Lkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;II)Lcom/vitorpamplona/kiko/player/KikoPlayer;
+}
+
+public final class com/vitorpamplona/kiko/compose/KikoLabels {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getActionButtons ()Ljava/lang/String;
+	public final fun getDirectionPad ()Ljava/lang/String;
+	public final fun getGameEnded ()Ljava/lang/String;
+	public final fun getGameError ()Ljava/lang/String;
+	public final fun getLoading ()Ljava/lang/String;
+	public final fun getNotACart ()Ljava/lang/String;
+}
+

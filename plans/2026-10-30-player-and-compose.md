@@ -1,0 +1,66 @@
+# kiko-player and kiko-compose — 2026-10-30
+
+Status: written and tested here; Amethyst moved onto them (its `CartPlayerViewModel` holds a
+`KikoPlayer`, its `CartPlayer` shows it with `KikoGame`). First released in 0.2.0.
+
+## Goal
+
+Make any Compose app able to play a cart with one call, the way an image loader shows an image:
+
+```kotlin
+KikoGame(key = url, source = { http.get(url) })
+```
+
+Until now every embedder rebuilt the same things around `FantasyConsole`: a thread with a deep
+stack, a frame clock, a watchdog for frames that never end, debounced saves, a sound output, and
+in Compose the screen, touch controls and key map. Amethyst had all of them; they moved here.
+
+## Why three artifacts
+
+- **`kiko` stays stdlib-only.** It is where hostile carts are handled, and "no dependencies, no
+  threads, no I/O" is a rule that can be stated and checked. Hosts that run their own loop (a
+  web page, a game engine, tests, a validator) keep using `step()` and `render()` and pull in
+  nothing else.
+- **`kiko-player` is headless.** It adds kotlinx.coroutines and is the only module that starts
+  threads or opens a sound device. Amethyst's `commons` may not depend on Compose UI, and its
+  ViewModel must hold the player, so the player cannot live in the Compose artifact.
+- **`kiko-compose`** adds Compose runtime/ui/foundation and lifecycle-runtime-compose, no
+  Material: the spinner is drawn by hand, the words come in `KikoLabels`, and there are no
+  icons or app chrome. The app adds its own pause/close buttons and routes the system Back to
+  `KikoPlayer.openPauseMenu()`.
+
+The player API (state shapes, audio backends) will change faster than cart semantics; separate
+artifacts keep that churn out of `kiko`'s ABI.
+
+## What moved from Amethyst
+
+| From (Amethyst) | To |
+|---|---|
+| `CartPlayerViewModel`: frame loop, pacing, backlog drop, watchdog, triple buffer, input hops | `KikoPlayer` |
+| `CartPlatform`: game thread, heap check, `CartAudioSink` and its actuals | `kiko-player` platform code |
+| `CartSaves` and the cap on new save ids | internal `SaveBuffer`; `KikoSaveStore` is the store |
+| `CartPlayer`: layout, `DirectionPad`, `ActionButtons`, key map, typed text, status overlay | `KikoGame` |
+| `CartScreenBitmap`, `claimSystemGestures` | `kiko-compose` platform code |
+| `Buttons` bits, the screen size | `kiko`'s `Buttons`, `FantasyConsole.SCREEN_SIZE` |
+
+One change on the way: buttons held while the cart loads used to be dropped; the player now
+hands them to the console when it starts.
+
+Amethyst keeps cart detection in notes, the Tor-routed download and sha256 check (the `source`),
+the DataStore save store and its string format, its strings, the pause/close buttons, Back and
+Android's window mode.
+
+## Limits
+
+- On the web there is one thread: the game shares it with the page, and the watchdog only runs
+  between frames, so a frame that never ends freezes the page.
+- No sound output on iOS, macOS, Linux or the web yet (`openAudio` returns null there; an app
+  may pass its own `KikoAudioSink`).
+- `kiko-compose` has no macOS or Linux native targets: Compose Multiplatform draws on the JVM,
+  Android, iOS and the web.
+
+## Demo
+
+`demo/` is an unpublished desktop window over `kiko-compose`: `./gradlew :demo:run`, or
+`--args="<cart>"`. With no file it plays `DemoCart.kt`, a small cart written for it, since real
+carts stay out of the repository.

@@ -38,24 +38,25 @@ jobs:
       # The public API must match kiko/api/: a change to it is deliberate (updateKotlinAbi) and
       # visible in review, and a breaking one needs a major version.
       - name: Check public API
-        run: ./gradlew :kiko:checkKotlinAbi
+        run: ./gradlew :kiko:checkKotlinAbi :kiko-player:checkKotlinAbi :kiko-compose:checkKotlinAbi
 
+      # kiko-compose's tests draw off screen with Skia: no display needed.
       - name: Check JVM and Android (host)
-        run: ./gradlew :kiko:jvmTest :kiko:testAndroidHostTest
+        run: ./gradlew :kiko:jvmTest :kiko-player:jvmTest :kiko-compose:jvmTest :demo:jvmTest :kiko:testAndroidHostTest :kiko-player:testAndroidHostTest
 
       # The common tests on a Linux binary: no JVM, a native stack and native memory.
       - name: Check Linux native
-        run: ./gradlew :kiko:linuxX64Test
+        run: ./gradlew :kiko:linuxX64Test :kiko-player:linuxX64Test
 
       # The common tests on Kotlin/JS (which emulates 64-bit Long) and on Kotlin/Wasm, each in
       # Node.js and in headless Chrome.
       - name: Check JavaScript and Wasm
-        run: ./gradlew :kiko:jsTest :kiko:wasmJsTest
+        run: ./gradlew :kiko:jsTest :kiko:wasmJsTest :kiko-player:jsTest :kiko-player:wasmJsTest
 
       # Apple code compiles on Linux as metadata, so a mistake fails here in minutes instead of
       # in the macOS job.
       - name: Check common code compiles
-        run: ./gradlew :kiko:compileCommonMainKotlinMetadata
+        run: ./gradlew :kiko:compileCommonMainKotlinMetadata :kiko-player:compileCommonMainKotlinMetadata :kiko-compose:compileCommonMainKotlinMetadata :kiko-compose:compileSkikoMainKotlinMetadata
 
       - name: Build (gradle)
         run: ./gradlew assemble
@@ -82,4 +83,4 @@ jobs:
 
       # iosArm64 has no simulator to run on; compiling its tests catches device-only drift.
       - name: Check iOS and macOS
-        run: ./gradlew :kiko:iosSimulatorArm64Test :kiko:macosArm64Test :kiko:compileTestKotlinIosArm64
+        run: ./gradlew :kiko:iosSimulatorArm64Test :kiko:macosArm64Test :kiko:compileTestKotlinIosArm64 :kiko-player:iosSimulatorArm64Test :kiko-player:macosArm64Test :kiko-compose:compileKotlinIosArm64 :kiko-compose:compileKotlinIosSimulatorArm64

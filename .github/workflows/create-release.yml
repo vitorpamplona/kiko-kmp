@@ -26,7 +26,7 @@ jobs:
       - uses: ./.github/actions/cache-konan
 
       - name: Check iOS and macOS
-        run: ./gradlew :kiko:iosSimulatorArm64Test :kiko:macosArm64Test :kiko:compileTestKotlinIosArm64
+        run: ./gradlew :kiko:iosSimulatorArm64Test :kiko:macosArm64Test :kiko:compileTestKotlinIosArm64 :kiko-player:iosSimulatorArm64Test :kiko-player:macosArm64Test :kiko-compose:compileKotlinIosArm64 :kiko-compose:compileKotlinIosSimulatorArm64
 
   # Apple klibs cross-compile on Linux; only Apple test binaries need a Mac.
   deploy:
@@ -53,10 +53,10 @@ jobs:
         run: ./gradlew spotlessCheck
 
       - name: Check
-        run: ./gradlew :kiko:checkKotlinAbi :kiko:jvmTest :kiko:testAndroidHostTest :kiko:linuxX64Test :kiko:jsTest :kiko:wasmJsTest :kiko:compileCommonMainKotlinMetadata
+        run: ./gradlew :kiko:checkKotlinAbi :kiko-player:checkKotlinAbi :kiko-compose:checkKotlinAbi :kiko:jvmTest :kiko-player:jvmTest :kiko-compose:jvmTest :demo:jvmTest :kiko:testAndroidHostTest :kiko-player:testAndroidHostTest :kiko:linuxX64Test :kiko-player:linuxX64Test :kiko:jsTest :kiko:wasmJsTest :kiko-player:jsTest :kiko-player:wasmJsTest :kiko:compileCommonMainKotlinMetadata :kiko-player:compileCommonMainKotlinMetadata :kiko-compose:compileCommonMainKotlinMetadata
 
       - name: Build (gradle)
-        run: ./gradlew :kiko:assemble
+        run: ./gradlew :kiko:assemble :kiko-player:assemble :kiko-compose:assemble
 
       # Tag v1.2.3 publishes version 1.2.3.
       - name: Set version for tag
@@ -64,7 +64,7 @@ jobs:
           echo "ORG_GRADLE_PROJECT_VERSION_NAME=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
 
       - name: Publish
-        run: ./gradlew :kiko:publishAllPublicationsToMavenCentral --no-configuration-cache
+        run: ./gradlew :kiko:publishAllPublicationsToMavenCentral :kiko-player:publishAllPublicationsToMavenCentral :kiko-compose:publishAllPublicationsToMavenCentral --no-configuration-cache
         env:
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_USERNAME }}
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_PASSWORD }}

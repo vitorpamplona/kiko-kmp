@@ -15,3 +15,6 @@ dependencyResolutionManagement {
 
 rootProject.name = "kiko-kmp"
 include(":kiko")
+include(":kiko-player")
+include(":kiko-compose")
+include(":demo")

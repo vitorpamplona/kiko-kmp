@@ -8,4 +8,4 @@ install:
   # script does nothing, and Gradle reads Central itself (same fix as Quartz).
   # JitPack snapshots carry the common metadata, the JVM and the Android library; native and web
   # artifacts come from Maven Central releases.
-  - env -u MAVEN_CENTRAL_MIRROR ./gradlew :kiko:publishKotlinMultiplatformPublicationToMavenLocal :kiko:publishJvmPublicationToMavenLocal :kiko:publishAndroidPublicationToMavenLocal --init-script nosign.init.gradle
+  - env -u MAVEN_CENTRAL_MIRROR ./gradlew :kiko:publishKotlinMultiplatformPublicationToMavenLocal :kiko:publishJvmPublicationToMavenLocal :kiko:publishAndroidPublicationToMavenLocal :kiko-player:publishKotlinMultiplatformPublicationToMavenLocal :kiko-player:publishJvmPublicationToMavenLocal :kiko-player:publishAndroidPublicationToMavenLocal :kiko-compose:publishKotlinMultiplatformPublicationToMavenLocal :kiko-compose:publishJvmPublicationToMavenLocal :kiko-compose:publishAndroidPublicationToMavenLocal --init-script nosign.init.gradle

@@ -1,0 +1,83 @@
+// Klib ABI Dump
+// Targets: [iosArm64, iosSimulatorArm64, js, linuxX64, macosArm64, wasmJs]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <kiko-kmp:kiko-player>
+abstract interface com.vitorpamplona.kiko.player/KikoAudioSink { // com.vitorpamplona.kiko.player/KikoAudioSink|null[0]
+    abstract fun close() // com.vitorpamplona.kiko.player/KikoAudioSink.close|close(){}[0]
+    abstract fun write(kotlin/FloatArray, kotlin/Int) // com.vitorpamplona.kiko.player/KikoAudioSink.write|write(kotlin.FloatArray;kotlin.Int){}[0]
+}
+
+abstract interface com.vitorpamplona.kiko.player/KikoSaveStore { // com.vitorpamplona.kiko.player/KikoSaveStore|null[0]
+    abstract suspend fun loadAll(): kotlin.collections/Map<kotlin/String, kotlin/IntArray> // com.vitorpamplona.kiko.player/KikoSaveStore.loadAll|loadAll(){}[0]
+    abstract suspend fun save(kotlin.collections/Map<kotlin/String, kotlin/IntArray>) // com.vitorpamplona.kiko.player/KikoSaveStore.save|save(kotlin.collections.Map<kotlin.String,kotlin.IntArray>){}[0]
+
+    final object Companion { // com.vitorpamplona.kiko.player/KikoSaveStore.Companion|null[0]
+        final const val VALUES // com.vitorpamplona.kiko.player/KikoSaveStore.Companion.VALUES|{}VALUES[0]
+            final fun <get-VALUES>(): kotlin/Int // com.vitorpamplona.kiko.player/KikoSaveStore.Companion.VALUES.<get-VALUES>|<get-VALUES>(){}[0]
+    }
+}
+
+final class com.vitorpamplona.kiko.player/KikoPlayer : kotlin/AutoCloseable { // com.vitorpamplona.kiko.player/KikoPlayer|null[0]
+    constructor <init>(kotlin.coroutines/SuspendFunction0<kotlin/ByteArray?>, com.vitorpamplona.kiko.player/KikoSaveStore? = ..., com.vitorpamplona.kiko.runtime/ConsoleHost = ..., kotlin/Function1<kotlin/Int, com.vitorpamplona.kiko.player/KikoAudioSink?> = ...) // com.vitorpamplona.kiko.player/KikoPlayer.<init>|<init>(kotlin.coroutines.SuspendFunction0<kotlin.ByteArray?>;com.vitorpamplona.kiko.player.KikoSaveStore?;com.vitorpamplona.kiko.runtime.ConsoleHost;kotlin.Function1<kotlin.Int,com.vitorpamplona.kiko.player.KikoAudioSink?>){}[0]
+
+    final val frame // com.vitorpamplona.kiko.player/KikoPlayer.frame|{}frame[0]
+        final fun <get-frame>(): kotlinx.coroutines.flow/StateFlow<com.vitorpamplona.kiko.player/KikoPlayer.Frame?> // com.vitorpamplona.kiko.player/KikoPlayer.frame.<get-frame>|<get-frame>(){}[0]
+    final val status // com.vitorpamplona.kiko.player/KikoPlayer.status|{}status[0]
+        final fun <get-status>(): kotlinx.coroutines.flow/StateFlow<com.vitorpamplona.kiko.player/KikoPlayer.Status> // com.vitorpamplona.kiko.player/KikoPlayer.status.<get-status>|<get-status>(){}[0]
+
+    final fun close() // com.vitorpamplona.kiko.player/KikoPlayer.close|close(){}[0]
+    final fun openPauseMenu(): kotlin/Boolean // com.vitorpamplona.kiko.player/KikoPlayer.openPauseMenu|openPauseMenu(){}[0]
+    final fun pause() // com.vitorpamplona.kiko.player/KikoPlayer.pause|pause(){}[0]
+    final fun resume() // com.vitorpamplona.kiko.player/KikoPlayer.resume|resume(){}[0]
+    final fun scroll(kotlin/Int) // com.vitorpamplona.kiko.player/KikoPlayer.scroll|scroll(kotlin.Int){}[0]
+    final fun setButtons(kotlin/Int) // com.vitorpamplona.kiko.player/KikoPlayer.setButtons|setButtons(kotlin.Int){}[0]
+    final fun setPointer(kotlin/Int, kotlin/Int, kotlin/Int) // com.vitorpamplona.kiko.player/KikoPlayer.setPointer|setPointer(kotlin.Int;kotlin.Int;kotlin.Int){}[0]
+    final fun tapPause() // com.vitorpamplona.kiko.player/KikoPlayer.tapPause|tapPause(){}[0]
+    final fun type(kotlin/String) // com.vitorpamplona.kiko.player/KikoPlayer.type|type(kotlin.String){}[0]
+
+    sealed interface Status { // com.vitorpamplona.kiko.player/KikoPlayer.Status|null[0]
+        final class Stopped : com.vitorpamplona.kiko.player/KikoPlayer.Status { // com.vitorpamplona.kiko.player/KikoPlayer.Status.Stopped|null[0]
+            constructor <init>(kotlin/String?) // com.vitorpamplona.kiko.player/KikoPlayer.Status.Stopped.<init>|<init>(kotlin.String?){}[0]
+
+            final val error // com.vitorpamplona.kiko.player/KikoPlayer.Status.Stopped.error|{}error[0]
+                final fun <get-error>(): kotlin/String? // com.vitorpamplona.kiko.player/KikoPlayer.Status.Stopped.error.<get-error>|<get-error>(){}[0]
+
+            final fun component1(): kotlin/String? // com.vitorpamplona.kiko.player/KikoPlayer.Status.Stopped.component1|component1(){}[0]
+            final fun copy(kotlin/String? = ...): com.vitorpamplona.kiko.player/KikoPlayer.Status.Stopped // com.vitorpamplona.kiko.player/KikoPlayer.Status.Stopped.copy|copy(kotlin.String?){}[0]
+            final fun equals(kotlin/Any?): kotlin/Boolean // com.vitorpamplona.kiko.player/KikoPlayer.Status.Stopped.equals|equals(kotlin.Any?){}[0]
+            final fun hashCode(): kotlin/Int // com.vitorpamplona.kiko.player/KikoPlayer.Status.Stopped.hashCode|hashCode(){}[0]
+            final fun toString(): kotlin/String // com.vitorpamplona.kiko.player/KikoPlayer.Status.Stopped.toString|toString(){}[0]
+        }
+
+        final object Loading : com.vitorpamplona.kiko.player/KikoPlayer.Status { // com.vitorpamplona.kiko.player/KikoPlayer.Status.Loading|null[0]
+            final fun equals(kotlin/Any?): kotlin/Boolean // com.vitorpamplona.kiko.player/KikoPlayer.Status.Loading.equals|equals(kotlin.Any?){}[0]
+            final fun hashCode(): kotlin/Int // com.vitorpamplona.kiko.player/KikoPlayer.Status.Loading.hashCode|hashCode(){}[0]
+            final fun toString(): kotlin/String // com.vitorpamplona.kiko.player/KikoPlayer.Status.Loading.toString|toString(){}[0]
+        }
+
+        final object NotACart : com.vitorpamplona.kiko.player/KikoPlayer.Status { // com.vitorpamplona.kiko.player/KikoPlayer.Status.NotACart|null[0]
+            final fun equals(kotlin/Any?): kotlin/Boolean // com.vitorpamplona.kiko.player/KikoPlayer.Status.NotACart.equals|equals(kotlin.Any?){}[0]
+            final fun hashCode(): kotlin/Int // com.vitorpamplona.kiko.player/KikoPlayer.Status.NotACart.hashCode|hashCode(){}[0]
+            final fun toString(): kotlin/String // com.vitorpamplona.kiko.player/KikoPlayer.Status.NotACart.toString|toString(){}[0]
+        }
+
+        final object Playing : com.vitorpamplona.kiko.player/KikoPlayer.Status { // com.vitorpamplona.kiko.player/KikoPlayer.Status.Playing|null[0]
+            final fun equals(kotlin/Any?): kotlin/Boolean // com.vitorpamplona.kiko.player/KikoPlayer.Status.Playing.equals|equals(kotlin.Any?){}[0]
+            final fun hashCode(): kotlin/Int // com.vitorpamplona.kiko.player/KikoPlayer.Status.Playing.hashCode|hashCode(){}[0]
+            final fun toString(): kotlin/String // com.vitorpamplona.kiko.player/KikoPlayer.Status.Playing.toString|toString(){}[0]
+        }
+    }
+
+    final class Frame { // com.vitorpamplona.kiko.player/KikoPlayer.Frame|null[0]
+        constructor <init>(kotlin/IntArray, kotlin/Long) // com.vitorpamplona.kiko.player/KikoPlayer.Frame.<init>|<init>(kotlin.IntArray;kotlin.Long){}[0]
+
+        final val number // com.vitorpamplona.kiko.player/KikoPlayer.Frame.number|{}number[0]
+            final fun <get-number>(): kotlin/Long // com.vitorpamplona.kiko.player/KikoPlayer.Frame.number.<get-number>|<get-number>(){}[0]
+        final val pixels // com.vitorpamplona.kiko.player/KikoPlayer.Frame.pixels|{}pixels[0]
+            final fun <get-pixels>(): kotlin/IntArray // com.vitorpamplona.kiko.player/KikoPlayer.Frame.pixels.<get-pixels>|<get-pixels>(){}[0]
+    }
+}
