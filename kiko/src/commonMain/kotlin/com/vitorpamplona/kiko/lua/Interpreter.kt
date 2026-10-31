@@ -176,12 +176,28 @@ internal class Interpreter {
         what: String? = null,
     ): Values {
         if (fn is LuaFunction) return fn.call(this, args)
-        if (fn is LuaTable) {
-            val handler = fn.metatable?.rawget("__call")
-            if (handler != null) return call(handler, listOf(fn) + args)
+        // A table's `__call` may itself be a callable table: each step passes the table it went
+        // through as a new first argument. Walked in a loop with the `__index` cap, so a table
+        // that is its own handler is an error instead of an endless chain no abort could stop.
+        var callee = fn
+        var argv = args
+        var steps = 0
+        while (steps++ < MAX_META_CHAIN) {
+            val handler = (callee as? LuaTable)?.metatable?.rawget("__call") ?: break
+            backEdge()
+            argv =
+                ArrayList<Any?>(argv.size + 1).apply {
+                    add(callee)
+                    addAll(argv)
+                }
+            if (handler is LuaFunction) return handler.call(this, argv)
+            callee = handler
+        }
+        if (callee is LuaTable && callee.metatable?.rawget("__call") != null) {
+            throw LuaError("'__call' chain too long; possible loop")
         }
         val name = what?.let { " ($it)" } ?: describe(source)
-        throw LuaError("attempt to call a ${typeName(fn)} value$name")
+        throw LuaError("attempt to call a ${typeName(callee)} value$name")
     }
 
     private fun describe(source: Expr?): String = source?.describe()?.let { " ($it)" } ?: ""

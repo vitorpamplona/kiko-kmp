@@ -34,6 +34,8 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertTrue
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 
@@ -140,6 +142,55 @@ class HostileCartTest {
     @Test
     fun recursionWithoutLoopsStopsWhenAborted() {
         assert(stopsWhenAborted("function f(n) if n > 0 then f(n - 1) f(n - 1) end end f(60)"))
+    }
+
+    /**
+     * Runs [code] on its own thread until it leaves RUNNING, for at most [limit]; aborts it if it
+     * has not by then. Returns the console, still running if even the abort did not stop it.
+     */
+    private fun runOnThread(
+        code: String,
+        limit: Duration = 5.seconds,
+    ): FantasyConsole {
+        val console = FantasyConsole(Cart(ByteArray(Cart.ROM_SIZE), code))
+        val worker =
+            Thread(null, {
+                while (console.state == FantasyConsole.State.RUNNING) console.step()
+            }, "cart", FantasyConsole.RECOMMENDED_STACK_BYTES)
+        worker.isDaemon = true
+        worker.start()
+        worker.join(limit.inWholeMilliseconds)
+        if (worker.isAlive) {
+            console.abort()
+            worker.join(1_000)
+        }
+        return console
+    }
+
+    @Test
+    fun aTableThatIsItsOwnCallHandlerIsAnErrorNotAHang() {
+        val started = TimeSource.Monotonic.markNow()
+        val console = runOnThread("t=setmetatable({},{}) getmetatable(t).__call=t t()")
+        assertEquals(FantasyConsole.State.ERROR, console.state)
+        assertTrue(console.error!!.contains("'__call' chain too long"), console.error)
+        assertTrue(started.elapsedNow() < 2.seconds, "took ${started.elapsedNow()}")
+    }
+
+    @Test
+    fun anOperatorWhoseHandlerIsACallLoopIsAnError() {
+        val console = runOnThread("t=setmetatable({},{}) getmetatable(t).__call=t getmetatable(t).__add=t x=t+1")
+        assertEquals(FantasyConsole.State.ERROR, console.state)
+        assertTrue(console.error!!.contains("'__call' chain too long"), console.error)
+    }
+
+    @Test
+    fun aCallLoopRetriedForeverStopsWhenAborted() {
+        // Each attempt fails inside its own coroutine; the cart keeps trying until it is told to stop.
+        assertTrue(
+            stopsWhenAborted(
+                "t=setmetatable({},{}) getmetatable(t).__call=t while true do coresume(cocreate(function() t() end)) end",
+            ),
+        )
     }
 
     @Test
