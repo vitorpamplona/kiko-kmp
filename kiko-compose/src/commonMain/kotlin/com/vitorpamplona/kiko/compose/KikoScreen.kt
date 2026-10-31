@@ -21,6 +21,7 @@
 package com.vitorpamplona.kiko.compose
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
@@ -40,7 +41,8 @@ import kotlin.math.floor
 import kotlin.math.min
 
 /**
- * The game's 128x128 screen, as large as fits in [modifier]'s area, scaled by a whole number when
+ * The game's 128x128 screen, as large as fits in the space it is given (all of it unless
+ * [modifier] sets a size), scaled by a whole number when
  * there is room so pixels stay square. The pointer over it (a mouse, or a finger on a touch
  * screen) goes to the game in game pixels, for games that read it. A new frame redraws it
  * without recomposing.
@@ -53,8 +55,9 @@ public fun KikoScreen(
     val frameNumber = player.frameNumber.collectAsState()
     val pixels = remember { IntArray(SCREEN_SIZE * SCREEN_SIZE) }
     val bitmap = remember { newScreenBitmap() }
+    // Fills what it is given, so a screen placed without a size still shows (a Canvas alone is 0x0).
     Canvas(
-        modifier.pointerInput(player) {
+        modifier.fillMaxSize().pointerInput(player) {
             awaitPointerEventScope {
                 while (true) {
                     val event = awaitPointerEvent()
