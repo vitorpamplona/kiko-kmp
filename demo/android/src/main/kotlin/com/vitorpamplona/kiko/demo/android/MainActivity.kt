@@ -20,8 +20,10 @@
  */
 package com.vitorpamplona.kiko.demo.android
 
+import android.graphics.Color
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -39,7 +41,12 @@ import kotlinx.coroutines.withContext
 /** The demo's own cart, or one picked with the system file picker. */
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
-        enableEdgeToEdge()
+        // The demo is black in light mode too, so the bars take light icons: the default would draw
+        // dark ones, invisible on black.
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
+            navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
+        )
         super.onCreate(savedInstanceState)
         setContent {
             var cart by remember { mutableStateOf<ByteArray?>(null) }
