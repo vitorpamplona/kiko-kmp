@@ -37,5 +37,12 @@ class KikoComposeLibraryPlugin : Plugin<Project> {
                     getByName("webMain").dependsOn(skikoMain)
                 }
             }
+
+            // The Compose plugin fails `check` when a browser target's tests could load Skiko
+            // but no executable bundles them (CMP-4906). A library has no executable and these
+            // modules run no browser tests, so the check guards nothing here.
+            tasks.matching { it.name.startsWith("checkComposeUiTestConfigurationFor") }.configureEach {
+                enabled = false
+            }
         }
 }
