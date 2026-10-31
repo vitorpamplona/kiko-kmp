@@ -17,6 +17,7 @@ Kotlin stdlib and runs on the JVM, Android, iOS, macOS, Linux, JavaScript and Wa
   <img src="docs/screenshots/browser.jpg" height="420" alt="1492 playing in a browser, with the touch controls beside the screen">
 </p>
 <p align="center"><sub><i>1492</i> by A.C. Wright Design (MIT), in the demo app on iOS and in a browser.</sub></p>
+<p align="center"><b><a href="https://vitorpamplona.com/kiko-kmp/">Play the demo in your browser</a></b></p>
 
 It comes in three artifacts, so an app takes only what it needs:
 
@@ -101,6 +102,9 @@ cart runs as fast as the host allows instead of slowing down. Design notes: [`pl
 
 ## Try it
 
+The browser version runs at **[vitorpamplona.com/kiko-kmp](https://vitorpamplona.com/kiko-kmp/)**:
+arrow keys and Z/X, or the touch controls on a phone. To build it yourself, on any platform:
+
 ```bash
 ./gradlew :demo:run                          # desktop: a small game written for the demo
 ./gradlew :demo:run --args="/path/to/game.p8.png"
@@ -112,8 +116,8 @@ open demo/ios/KikoDemo.xcodeproj             # iOS: pick a simulator or your pho
 Every version offers a short list of games: the demo's own cart, *Snowman* by aquova (CC0) and
 *1492* by A.C. Wright Design (MIT), with each game's author and license on screen. Thanks to
 them for sharing their games; [`demo/CREDITS.md`](demo/CREDITS.md) has the sources and
-licenses. All versions but the browser page can also open a cart of yours. The `pages.yml` workflow publishes that page to
-GitHub Pages from `main`. None of this is published to Maven.
+licenses. All versions but the browser page can also open a cart of yours. The `pages.yml`
+workflow publishes the browser page from `main`. None of this is published to Maven.
 
 The iOS build runs Gradle from Xcode (`:demo:embedAndSignAppleFrameworkForXcode`), so Xcode
 needs a JDK 17+ it can find (`JAVA_HOME`, or `org.gradle.java.home` in
