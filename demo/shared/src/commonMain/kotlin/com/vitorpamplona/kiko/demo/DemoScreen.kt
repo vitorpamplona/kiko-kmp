@@ -34,11 +34,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.vitorpamplona.kiko.compose.KikoGame
+import com.vitorpamplona.kiko.compose.rememberKikoPlayer
 import kotlinx.coroutines.launch
 
 /**
- * The demo on every platform: one [KikoGame] call (the whole integration; see `examples/` for
- * more ways to use kiko) under the demo's own [GameMenu]. Plays [opened], a cart the user picked
+ * The demo on every platform: one [KikoGame] (the whole integration; see `examples/` for more
+ * ways to use kiko) under the demo's own [GameMenu]. Plays [opened], a cart the user picked
  * with [onOpen], or one of [DEMO_GAMES].
  */
 @Composable
@@ -57,7 +58,8 @@ fun DemoScreen(
             cart = game.cart()
             playing = game
         }
-    LaunchedEffect(Unit) { if (cart == null) play(DEMO_GAMES.first()) }
+    // The demo's own game, unless the app started with a cart of the user's.
+    LaunchedEffect(Unit) { if (cart == null && opened == null) play(DEMO_GAMES.first()) }
     LaunchedEffect(opened) {
         if (opened != null) {
             cart = opened
@@ -67,8 +69,11 @@ fun DemoScreen(
 
     Box(Modifier.fillMaxSize().background(Color.Black)) {
         cart?.let { bytes ->
-            // The whole integration: one call.
-            KikoGame(key = bytes, source = { bytes }, modifier = Modifier.fillMaxSize().safeDrawingPadding(), onExit = onExit)
+            // The whole integration: one KikoGame call, here with the player held by the demo so
+            // the system Back gesture can open the game's pause menu first.
+            val player = rememberKikoPlayer(key = bytes) { bytes }
+            KikoGame(player, Modifier.fillMaxSize().safeDrawingPadding(), onExit = onExit)
+            SystemBack { if (!player.openPauseMenu()) onExit?.invoke() }
         }
         GameMenu(playing = playing, onPick = ::play, onOpen = onOpen)
     }

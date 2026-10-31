@@ -70,6 +70,13 @@ kotlin {
             }
         }
 
+        androidMain {
+            dependencies {
+                // SystemBack: the Back gesture opens the game's pause menu first.
+                implementation(libs.androidx.activity.compose)
+            }
+        }
+
         jvmMain {
             dependencies {
                 implementation(compose.desktop.currentOs)
