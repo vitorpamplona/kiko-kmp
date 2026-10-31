@@ -36,7 +36,7 @@ jobs:
 
       - uses: actions/upload-pages-artifact@v4
         with:
-          path: demo/build/dist/wasmJs/productionExecutable
+          path: demo/shared/build/dist/wasmJs/productionExecutable
 
   deploy:
     needs: build

@@ -96,3 +96,42 @@ tasks.register<Copy>("installGitHook") {
     into(".git/hooks")
     filePermissions { unix("rwxrwxrwx") }
 }
+
+// The checks, listed once: the pre-push hook, CI (build.yml) and the release workflow
+// (create-release.yml) all run these tasks instead of keeping their own lists.
+val published = listOf(":kiko", ":kiko-player", ":kiko-compose")
+
+tasks.register("checkLinux") {
+    group = "verification"
+    description = "Formatting, the public APIs, and every test that runs on a Linux machine except the web's."
+    dependsOn(allprojects.map { if (it == rootProject) ":spotlessCheck" else "${it.path}:spotlessCheck" })
+    dependsOn(published.map { "$it:checkKotlinAbi" })
+    dependsOn(":kiko:jvmTest", ":kiko-player:jvmTest", ":kiko-compose:jvmTest", ":demo:jvmTest")
+    dependsOn(":kiko:testAndroidHostTest", ":kiko-player:testAndroidHostTest")
+    dependsOn(":kiko:linuxX64Test", ":kiko-player:linuxX64Test")
+    // Apple code compiles on Linux as metadata, so a mistake fails here in minutes instead of in
+    // the macOS job.
+    dependsOn(published.map { "$it:compileCommonMainKotlinMetadata" })
+    dependsOn(":kiko-compose:compileSkikoMainKotlinMetadata")
+}
+
+tasks.register("checkWeb") {
+    group = "verification"
+    description = "The common tests on Kotlin/JS and Kotlin/Wasm, in Node.js and headless Chrome."
+    dependsOn(":kiko:jsTest", ":kiko:wasmJsTest", ":kiko-player:jsTest", ":kiko-player:wasmJsTest")
+}
+
+tasks.register("checkWebNode") {
+    group = "verification"
+    description = "The common tests on Kotlin/JS and Kotlin/Wasm, in Node.js only (no browser needed)."
+    dependsOn(":kiko:jsNodeTest", ":kiko:wasmJsNodeTest", ":kiko-player:jsNodeTest", ":kiko-player:wasmJsNodeTest")
+}
+
+tasks.register("checkApple") {
+    group = "verification"
+    description = "The iOS and macOS tests, and the iOS builds of kiko-compose and the demo. macOS only."
+    dependsOn(":kiko:iosSimulatorArm64Test", ":kiko:macosArm64Test", ":kiko:compileTestKotlinIosArm64")
+    dependsOn(":kiko-player:iosSimulatorArm64Test", ":kiko-player:macosArm64Test")
+    dependsOn(":kiko-compose:compileKotlinIosArm64", ":kiko-compose:compileKotlinIosSimulatorArm64")
+    dependsOn(":demo:linkDebugFrameworkIosSimulatorArm64")
+}

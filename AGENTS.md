@@ -39,12 +39,17 @@ and moved here so any app can embed it.
   (`rememberKikoInput`). Also `rememberKikoPlayer` and `KikoLabels`. Platform code: the frame
   bitmap and edge-gesture exclusion (`androidMain`, `skikoMain`). No Material, no string
   resources, no app chrome.
-- `demo/` — kiko-compose on every platform, with a small cart of our own (`DemoCart.kt`) and one
-  screen (`DemoScreen`): the desktop (`./gradlew :demo:run [--args=<cart>]`), a browser
-  (`wasmJsMain`, `:demo:wasmJsBrowserDevelopmentRun`; `pages.yml` publishes it), and the `DemoKit`
-  framework for iOS (`iosMain`). `demo-android/` is the Android app around it
-  (`:demo-android:installDebug`); `demo-ios/` is the Xcode project (SwiftUI shell and file
-  importer), which builds `DemoKit` through Gradle. None of it is published to Maven.
+- `demo/` — one demo app on every platform, with a small cart of our own (`DemoCart.kt`) and one
+  screen (`DemoScreen`). `demo/shared` (Gradle `:demo`) holds them with the desktop
+  (`./gradlew :demo:run [--args=<cart>]`), browser (`wasmJsMain`,
+  `:demo:wasmJsBrowserDevelopmentRun`; `pages.yml` publishes it) and iOS (`iosMain`, the `DemoKit`
+  framework) entry points; `demo/android` (`:demo-android`, `installDebug`) is the Android app
+  around it; `demo/ios` is the Xcode project (SwiftUI shell and file importer), which builds
+  `DemoKit` through Gradle. None of it is published to Maven.
+- `build-logic/` — the build's own plugins: `kiko.library` (a published module with no UI, every
+  target) and `kiko.compose-library` (a published Compose module) set the targets, JVM 17, the
+  Android SDK and namespace, the explicit API and its check, and publishing. A module's own build
+  file holds only its dependencies and source sets.
 - `plans/` — design notes, `YYYY-MM-DD-<slug>.md`.
 - `tools/agent-hooks/` — the checks Claude Code and Codex run before a push (see below).
 
@@ -115,19 +120,23 @@ the screenshots it writes.
 ./gradlew spotlessApply
 ./gradlew :kiko:jvmTest                         # also `./gradlew test`
 ./gradlew :kiko:jvmTest --tests "com.vitorpamplona.kiko.LuaTest"
-./gradlew :kiko:checkKotlinAbi                  # :kiko:updateKotlinAbi after a deliberate change
+./gradlew checkKotlinAbi                        # updateKotlinAbi after a deliberate change
 ./gradlew :kiko-player:jvmTest :kiko-compose:jvmTest :demo:jvmTest
 ./gradlew :demo:run --args="<cart>"             # try a cart in a window
 ./gradlew :demo:wasmJsBrowserDevelopmentRun     # ...or in a browser
-./gradlew :kiko:testAndroidHostTest :kiko:linuxX64Test :kiko:jsNodeTest :kiko:wasmJsNodeTest
-./gradlew :kiko:iosSimulatorArm64Test :kiko:macosArm64Test   # macOS only
+./gradlew checkLinux checkWebNode               # everything the pre-push hook runs
+./gradlew checkWeb                              # JS and Wasm in Node.js and headless Chrome
+./gradlew checkApple                            # macOS only
 # Real carts, with a screenshot of each in <out>:
 ./gradlew :kiko:jvmTest --tests '*CartSmokeTest*' -Dkiko.carts=<dir> -Dkiko.out=<out>
 ```
 
-The pre-push hook runs `spotlessCheck`, the ABI check, the JVM, Android host, Linux, JS and Wasm
-(Node.js) tests, the common metadata compile and the agent-config check: CI's `build` job, minus
-headless Chrome. The Apple tests run in CI's `test-apple` job.
+The check lists live once, as tasks in the root `build.gradle.kts`: `checkLinux` (formatting, the
+API checks, the JVM, Android host and Linux tests, the common metadata compile), `checkWeb` /
+`checkWebNode` (JS and Wasm) and `checkApple`. The pre-push hook runs `checkLinux checkWebNode`
+and the agent-config check; CI's `build` job runs `checkLinux checkWeb` and its `test-apple` job
+`checkApple`; the release runs all three. A new module or test task goes in those lists, not in
+the workflows.
 
 ## Dependency licensing
 

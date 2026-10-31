@@ -156,7 +156,7 @@ allows instead of slowing down). Design notes: [`plans/`](plans).
 ./gradlew :demo:run --args="/path/to/game.p8.png"
 ./gradlew :demo:wasmJsBrowserDevelopmentRun  # browser
 ./gradlew :demo-android:installDebug         # Android, on a connected phone or emulator
-open demo-ios/KikoDemo.xcodeproj             # iOS: pick a simulator or your phone, then Run
+open demo/ios/KikoDemo.xcodeproj             # iOS: pick a simulator or your phone, then Run
 ```
 
 Every version plays the demo's own cart and has an "Open cart" button for one of yours, except
@@ -173,6 +173,7 @@ Games play silently on iOS for now: the player has no iOS sound output yet.
 
 ```bash
 ./gradlew :kiko:jvmTest :kiko-player:jvmTest :kiko-compose:jvmTest
+./gradlew checkLinux checkWebNode   # every check that runs on Linux, as the pre-push hook does
 # Play a folder of carts headless and keep a screenshot of each (carts are not in this repo):
 ./gradlew :kiko:jvmTest --tests '*CartSmokeTest*' -Dkiko.carts=/path/to/carts -Dkiko.out=/tmp/screens
 ```

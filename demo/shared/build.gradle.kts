@@ -12,7 +12,7 @@ plugins {
 //   Desktop: ./gradlew :demo:run, or ./gradlew :demo:run --args="<cart>"
 //   Browser: ./gradlew :demo:wasmJsBrowserDevelopmentRun (the Pages workflow publishes it)
 //   Android: ./gradlew :demo-android:installDebug (the app module around this one)
-//   iOS:     open demo-ios/KikoDemo.xcodeproj in Xcode, which builds the DemoKit framework here
+//   iOS:     open demo/ios/KikoDemo.xcodeproj in Xcode, which builds the DemoKit framework here
 kotlin {
     jvm {
         compilerOptions {

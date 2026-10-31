@@ -35,7 +35,7 @@ import platform.posix.memcpy
 private var opened by mutableStateOf<ByteArray?>(null)
 
 /**
- * The demo for the iOS app (`demo-ios/`). [onOpen] asks the Swift side to show its file
+ * The demo for the iOS app (`demo/ios/`). [onOpen] asks the Swift side to show its file
  * importer, which answers with [playCart].
  */
 fun mainViewController(onOpen: () -> Unit): UIViewController =

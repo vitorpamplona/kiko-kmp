@@ -20,7 +20,7 @@ struct ContentView: View {
     }
 }
 
-/// Hosts the Kotlin side (demo/src/iosMain), which draws the game and its controls.
+/// Hosts the Kotlin side (demo/shared/src/iosMain), which draws the game and its controls.
 struct ComposeView: UIViewControllerRepresentable {
     let onOpen: () -> Void
 
