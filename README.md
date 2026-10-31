@@ -11,12 +11,11 @@ Kotlin Multiplatform: its own Lua interpreter with 16:16 fixed-point numbers, th
 map, graphics, text, sound, input, pause menu and cart formats. It depends on nothing but the
 Kotlin stdlib and runs on the JVM, Android, iOS, macOS, Linux, JavaScript and Wasm.
 
-<p align="center">
-  <img src="docs/screenshots/ios.png" height="420" alt="1492 playing on an iPhone, with the touch controls under the screen">
-  &nbsp;
-  <img src="docs/screenshots/browser.jpg" height="420" alt="1492 playing in a browser, with the touch controls beside the screen">
-</p>
-<p align="center"><sub><i>1492</i> by A.C. Wright Design (MIT), in the demo app on iOS and in a browser.</sub></p>
+| Android | iOS | Desktop | Browser |
+|:---:|:---:|:---:|:---:|
+| <img src="docs/screenshots/android.png" width="180" alt="1492 on Android"> | <img src="docs/screenshots/ios.png" width="180" alt="1492 on iOS"> | <img src="docs/screenshots/desktop.png" width="180" alt="1492 in a desktop window"> | <img src="docs/screenshots/browser.png" width="180" alt="1492 in a browser"> |
+
+<p align="center"><sub><i>1492</i> by A.C. Wright Design (MIT), in the demo app.</sub></p>
 <p align="center"><b><a href="https://vitorpamplona.com/kiko-kmp/">Play the demo in your browser</a></b></p>
 
 It comes in three artifacts, so an app takes only what it needs:
