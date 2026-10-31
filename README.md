@@ -159,8 +159,10 @@ allows instead of slowing down). Design notes: [`plans/`](plans).
 open demo/ios/KikoDemo.xcodeproj             # iOS: pick a simulator or your phone, then Run
 ```
 
-Every version plays the demo's own cart and has an "Open cart" button for one of yours, except
-the browser page, which plays only its own. The `pages.yml` workflow publishes that page to
+Every version offers a short list of games: the demo's own cart, *Snowman* by aquova (CC0) and
+*1492* by A.C. Wright Design (MIT), with each game's author and license on screen. Thanks to
+them for sharing their games; [`demo/CREDITS.md`](demo/CREDITS.md) has the sources and
+licenses. All versions but the browser page can also open a cart of yours. The `pages.yml` workflow publishes that page to
 GitHub Pages from `main`. None of this is published to Maven.
 
 The iOS build runs Gradle from Xcode (`:demo:embedAndSignAppleFrameworkForXcode`), so Xcode

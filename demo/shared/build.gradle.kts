@@ -34,6 +34,9 @@ kotlin {
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_17)
         }
+
+        // The bundled games are Compose resources.
+        androidResources.enable = true
     }
 
     listOf(iosArm64(), iosSimulatorArm64()).forEach { target ->
@@ -60,6 +63,8 @@ kotlin {
                 implementation(libs.compose.runtime)
                 implementation(libs.compose.ui)
                 implementation(libs.compose.foundation)
+                // The bundled games (composeResources/files/carts; see demo/CREDITS.md).
+                implementation(libs.compose.components.resources)
             }
         }
 
@@ -75,6 +80,10 @@ kotlin {
             }
         }
     }
+}
+
+compose.resources {
+    packageOfResClass = "com.vitorpamplona.kiko.demo.resources"
 }
 
 compose.desktop {

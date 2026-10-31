@@ -81,5 +81,6 @@ Android's window mode.
 
 `demo/` is unpublished: a desktop window over `kiko-compose` (`./gradlew :demo:run`, or
 `--args="<cart>"`) and a browser page (`wasmJsMain`), which `pages.yml` publishes to GitHub Pages
-from `main`. Without a file it plays `DemoCart.kt`, a small cart written for it, since real carts
-stay out of the repository.
+from `main`. Without a file it plays `DemoCart.kt`, a small cart written for it, or one of two
+permissively licensed games by other people (`DEMO_GAMES`, credited in the app and in
+`demo/CREDITS.md`, which also records the games considered and why they were left out).

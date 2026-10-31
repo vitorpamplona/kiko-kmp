@@ -23,10 +23,10 @@ package com.vitorpamplona.kiko.demo
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.window.ComposeViewport
 
-/** Plays [DEMO_CART] in the page's `#kiko` element. */
+/** Plays [DEMO_GAMES] in the page's `#kiko` element. */
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
     ComposeViewport("kiko") {
-        DemoScreen(key = Unit, source = { null }, onOpen = null)
+        DemoScreen(key = null, source = { null }, onOpen = null)
     }
 }

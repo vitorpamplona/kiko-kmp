@@ -83,8 +83,15 @@ thread, a frame that never returns) on the JVM; kiko-compose's `ControlsTouchTes
   in `png`, parser nesting, `Interpreter.MAX_DEPTH` and `MAX_STRING`, abort checks on loop back
   edges and calls, drawing clipped before it loops, `ConsoleHost.memoryLow`), and give each new
   one a test in `HostileCartTest` that fails without it.
-- **Carts are never committed.** Most published carts are CC BY-NC-SA. Tests build their carts in
-  code; `CartSmokeTest` reads real ones from a folder outside the repository.
+- **Carts are not committed,** with one exception. Most published carts are CC BY-NC-SA or carry
+  no license at all. Tests build their carts in code; `CartSmokeTest` reads real ones from a
+  folder outside the repository. The exception is the demo's games
+  (`demo/shared/src/commonMain/composeResources/files/carts/`): a cart goes there only under a
+  permissive license (CC0, MIT, CC BY) that covers all of it, art, sound and any code borrowed
+  from someone else included, unchanged, with its full license text beside it, an entry in
+  `DEMO_GAMES` that shows its author and license in the app, and a row in `demo/CREDITS.md` naming
+  the source commit. When in doubt, leave it out and record why in `demo/CREDITS.md`. Never
+  download carts from the Lexaloffle BBS with a script: its terms forbid automated access.
 - **Match the original's semantics**, observable ones included: 16:16 overflow and rounding,
   `btnp` repeat timing, draw state in RAM at its documented address, line numbers in errors.
   When the manual is silent, say so in a comment rather than guess silently.

@@ -38,8 +38,8 @@ import java.awt.Frame
 import java.io.File
 
 /**
- * Plays the cart named on the command line (`.p8.png`, `.p8` or `.p8.rom`), or [DEMO_CART]
- * without one. File > Open (or the Open cart button) picks another. Saves last while the window
+ * Plays the cart named on the command line (`.p8.png`, `.p8` or `.p8.rom`), or [DEMO_GAMES]
+ * without one. File > Open (or "Open a cart…" in the game list) picks another. Saves last while the window
  * is open.
  */
 fun main(args: Array<String>) =
@@ -56,7 +56,6 @@ fun main(args: Array<String>) =
                     Item("Open cart…", shortcut = KeyShortcut(Key.O, ctrl = true)) {
                         pickCart(window)?.let { cart = it }
                     }
-                    Item("Play the demo") { cart = null }
                     Separator()
                     Item("Quit", shortcut = KeyShortcut(Key.Q, ctrl = true), onClick = ::exitApplication)
                 }
