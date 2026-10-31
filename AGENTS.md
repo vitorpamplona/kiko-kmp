@@ -180,7 +180,8 @@ Both agents read the same rules, skills and checks, laid out like Amethyst's and
   `.claude/CLAUDE.md`, which imports it with `@../AGENTS.md` and adds only Claude-specific notes.
   Never write a rule in a `CLAUDE.md`.
 - **Skills are written once**, in `.claude/skills/<name>/`, and symlinked from
-  `.agents/skills/<name>`. Never copy a skill into `.agents/`. There are none yet.
+  `.agents/skills/<name>`. Never copy a skill into `.agents/`. Here: `ngit-pr` (PRs on GitHub or as nostr
+  proposals).
 - **A skill's `description` is how both agents decide to load it.** Keep its concrete class
   names, paths and commands; 120–300 characters, strongest triggers first.
 - **Shared checks live in `tools/agent-hooks/`.** `.claude/settings.json` and `.codex/hooks.json`
@@ -194,6 +195,17 @@ Both agents read the same rules, skills and checks, laid out like Amethyst's and
 may break the API; from 1.0.0 on a breaking change needs a major version, and goes out first as a
 deprecation (`@Deprecated("Use X instead. Removed in 2.0.0.", ReplaceWith("X"))`) in a minor.
 Amethyst pins a version, so a breaking change needs a matching change there.
+
+## Remotes and pull requests
+
+The repo is on GitHub, `github.com/vitorpamplona/kiko-kmp`, which holds the canonical `main`, and on
+nostr as a NIP-34 repository,
+`nostr://npub1gcxzte5zlkncx26j68ez60fzkvtkm9e0vrwdcvsjakxf9mu9qewqlfnj5z/relay.ngit.dev/kiko-kmp`: a
+push to that remote goes to its GRASP git servers and to GitHub. A PR can go out either way: a
+GitHub PR (`gh`), or a nostr proposal (`ngit`, a `pr/…` branch, reviewed on
+[gitworkshop.dev](https://gitworkshop.dev/npub1gcxzte5zlkncx26j68ez60fzkvtkm9e0vrwdcvsjakxf9mu9qewqlfnj5z/relay.ngit.dev/kiko-kmp)).
+Remote names vary per clone, so identify them by URL. Open a PR only when the human you work for
+asks, and before opening, revising or merging one by either path, use the `ngit-pr` skill.
 
 ## Releasing
 
