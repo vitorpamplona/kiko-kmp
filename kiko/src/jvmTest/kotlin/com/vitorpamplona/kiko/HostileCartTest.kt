@@ -23,9 +23,12 @@ package com.vitorpamplona.kiko
 import com.vitorpamplona.kiko.cart.Cart
 import com.vitorpamplona.kiko.cart.CartFormatException
 import com.vitorpamplona.kiko.cart.CartLoader
+import com.vitorpamplona.kiko.lua.Fix
+import com.vitorpamplona.kiko.runtime.ConsoleHost
 import com.vitorpamplona.kiko.runtime.FantasyConsole
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
+import java.lang.management.ManagementFactory
 import java.nio.ByteBuffer
 import java.util.zip.CRC32
 import java.util.zip.Deflater
@@ -38,6 +41,7 @@ import kotlin.test.assertTrue
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
+import com.sun.management.ThreadMXBean as AllocationCountingThreadMXBean
 
 /**
  * Carts come from strangers on Nostr. A hostile one may fail to load or stop with an error, but
@@ -191,6 +195,56 @@ class HostileCartTest {
                 "t=setmetatable({},{}) getmetatable(t).__call=t while true do coresume(cocreate(function() t() end)) end",
             ),
         )
+    }
+
+    /** Short of memory once the thread that made it has allocated more than [limit] bytes. */
+    private class AllocationLimitHost(
+        private val limit: Long,
+    ) : ConsoleHost {
+        private val threads = ManagementFactory.getThreadMXBean() as AllocationCountingThreadMXBean
+        private val start = threads.currentThreadAllocatedBytes
+
+        override fun memoryLow(): Boolean = threads.currentThreadAllocatedBytes - start > limit
+    }
+
+    /**
+     * Runs [code], whose loop counts in the global `i`, on this thread until the host's memory
+     * runs short, and returns how far the loop got before the cart was stopped.
+     */
+    private fun iterationsBeforeOutOfMemory(code: String): Int {
+        val console = FantasyConsole(Cart(ByteArray(Cart.ROM_SIZE), code), AllocationLimitHost(4L shl 20))
+        var frames = 0
+        while (console.state == FantasyConsole.State.RUNNING && frames++ < 10_000) console.step()
+        assertEquals(FantasyConsole.State.ERROR, console.state)
+        assertTrue(console.error!!.contains("out of memory"), console.error)
+        return Fix.toInt(console.interp.globals.rawget("i") as Int)
+    }
+
+    @Test
+    fun bigConcatenationsCheckMemoryBeforeTheSampledCheck() {
+        // 64 KiB strings: the check every thousand or so loop iterations would come only after
+        // 64 MiB, a megabyte string after a gigabyte.
+        val i = iterationsBeforeOutOfMemory("""s="x" for k=1,16 do s=s..s end t={} i=0 while true do i+=1 t[i]=s..i end""")
+        assertTrue(i < 200, "stopped after $i strings")
+    }
+
+    @Test
+    fun bigSplitsCheckMemoryBeforeTheSampledCheck() {
+        val i = iterationsBeforeOutOfMemory("""s="x" for k=1,10 do s=s..s end t={} i=0 while true do i+=1 t[i]=split(s,1) end""")
+        assertTrue(i < 400, "stopped after $i splits")
+    }
+
+    @Test
+    fun aLoopOfBigAllocationsStillEndsItsFrames() {
+        // Each split builds 64K strings: a thousand of them before the sampled frame check would
+        // hold one frame for seconds, long enough for a player's watchdog to call the game hung.
+        val console = FantasyConsole(Cart(ByteArray(Cart.ROM_SIZE), """s="x" for k=1,16 do s=s..s end i=0 while true do i+=1 x=split(s,1) end"""))
+        repeat(3) {
+            val started = TimeSource.Monotonic.markNow()
+            console.step()
+            assertTrue(started.elapsedNow() < 1.seconds, "frame $it took ${started.elapsedNow()}")
+        }
+        assertEquals(FantasyConsole.State.RUNNING, console.state)
     }
 
     @Test

@@ -334,7 +334,10 @@ internal class TableExpr(
                 val k = item.key.eval(f) ?: throw LuaError("table index is nil")
                 t.rawset(k, item.value.eval(f))
             } else if (i == items.size - 1 && item.value.isMulti) {
-                for (v in item.value.evalMulti(f)) t.rawsetInt(n++, v)
+                val values = item.value.evalMulti(f)
+                // `{unpack(t)}`, `{...}`: as long as the cart likes, unlike the items written out.
+                f.interp.charge(Interpreter.OBJECT_BYTES * values.size)
+                for (v in values) t.rawsetInt(n++, v)
             } else {
                 t.rawsetInt(n++, item.value.eval(f))
             }
