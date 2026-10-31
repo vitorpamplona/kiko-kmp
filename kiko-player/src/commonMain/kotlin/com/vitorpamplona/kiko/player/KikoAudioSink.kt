@@ -22,7 +22,11 @@ package com.vitorpamplona.kiko.player
 
 /** Where a game's sound goes: mono float samples in [-1, 1], written from the game's thread. */
 public interface KikoAudioSink {
-    /** Queues [count] samples of [samples], waiting while the device's buffer is full. */
+    /**
+     * Queues [count] samples of [samples]. Never waits for the device: the frame clock paces the
+     * game, and a write that blocked would freeze the game's thread where nothing can stop it.
+     * Samples that do not fit may be dropped.
+     */
     public fun write(
         samples: FloatArray,
         count: Int,

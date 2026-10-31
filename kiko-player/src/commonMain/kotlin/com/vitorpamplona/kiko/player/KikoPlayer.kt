@@ -154,6 +154,14 @@ public class KikoPlayer internal constructor(
     @Volatile
     private var menuOpen = false
 
+    // A pause tap sent by openPauseMenu that the game has not acted on yet, so a quick second
+    // Back sees the menu as open. Cleared after the frame that read the tap.
+    @Volatile
+    private var pauseTapPending = false
+
+    // Set on the game thread when a pause tap reaches the console, read after the next frame.
+    private var pauseTapDelivered = false
+
     // What each of the eight players holds, so input sent while the cart loads still counts.
     private val held = IntArray(8)
 
@@ -209,6 +217,7 @@ public class KikoPlayer internal constructor(
         onGameThread {
             it.setButtons(0, buttons or Buttons.PAUSE)
             it.setButtons(0, buttons)
+            pauseTapDelivered = true
         }
     }
 
@@ -218,9 +227,10 @@ public class KikoPlayer internal constructor(
      * should then close the player.
      */
     public fun openPauseMenu(): Boolean {
-        if (_status.value != Status.Playing || menuOpen) return false
-        // Until the next frame says so: a quick second Back must close, not toggle the menu shut.
-        menuOpen = true
+        if (_status.value != Status.Playing || menuOpen || pauseTapPending) return false
+        // Until the frame after the tap says so: a quick second Back must close, not toggle the
+        // menu shut.
+        pauseTapPending = true
         tapPause()
         return true
     }
@@ -254,11 +264,12 @@ public class KikoPlayer internal constructor(
             }
     }
 
-    /** Stops the game between frames, keeping it to [resume] later, and writes its saves. */
+    /**
+     * Stops the game between frames, keeping it to [resume] later, and writes its saves. A frame
+     * running now finishes first; the watchdog keeps watching it, so one that never ends is still
+     * stopped after [maxFrame].
+     */
     public fun pause() {
-        // Cancelling cannot interrupt a frame that never ends; stop such a game instead of
-        // leaving its thread spinning behind a closed player.
-        if (isStuck(PAUSE_STUCK)) stopHungGame()
         loop?.cancel()
         loop = null
         saveBuffer.flush()
@@ -272,7 +283,7 @@ public class KikoPlayer internal constructor(
         loop?.cancel()
         loop = null
         // The last saves are written outside [scope], which is going away.
-        saveBuffer.flush()
+        saveBuffer.close()
         scope.cancel()
         if (gameThread.isInitialized()) gameThread.value.close()
     }
@@ -301,9 +312,10 @@ public class KikoPlayer internal constructor(
         saveBuffer.load()
         return try {
             FantasyConsole(CartLoader.load(bytes), consoleHost).also { game ->
-                // Input sent while loading had no game to reach yet: what is held still counts.
-                for (i in held.indices) if (held[i] != 0) game.setButtons(i, held[i])
+                // Published first: input sent from now on hops to this thread after this replay
+                // of what was held while loading, so the last change always lands last.
                 console = game
+                for (i in held.indices) if (held[i] != 0) game.setButtons(i, held[i])
             }
         } catch (e: CancellationException) {
             throw e
@@ -342,6 +354,10 @@ public class KikoPlayer internal constructor(
                     stepStarted = null
                 }
                 menuOpen = game.isPaused
+                if (pauseTapDelivered) {
+                    pauseTapDelivered = false
+                    pauseTapPending = false
+                }
                 publishFrame(game)
                 if (game.state != FantasyConsole.State.RUNNING) {
                     _status.value = Status.Stopped(if (hung) NOT_RESPONDING else game.error)
@@ -375,7 +391,6 @@ public class KikoPlayer internal constructor(
     private companion object {
         const val SCREEN_PIXELS = FantasyConsole.SCREEN_SIZE * FantasyConsole.SCREEN_SIZE
         val MAX_LAG = 250.milliseconds
-        val PAUSE_STUCK = 1.seconds
         val WATCHDOG_INTERVAL = 1.seconds
         const val NOT_RESPONDING = "the game stopped responding"
     }

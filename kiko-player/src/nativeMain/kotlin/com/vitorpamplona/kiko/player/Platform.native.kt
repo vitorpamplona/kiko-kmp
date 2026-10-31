@@ -20,20 +20,56 @@
  */
 package com.vitorpamplona.kiko.player
 
+import com.vitorpamplona.kiko.runtime.FantasyConsole
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.newSingleThreadContext
+import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.runBlocking
+import kotlin.coroutines.CoroutineContext
 
-@OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
+/**
+ * A thread of our own with [FantasyConsole.RECOMMENDED_STACK_BYTES] of stack: a secondary thread
+ * gets 512 KiB on iOS and 8 MiB on Linux, and a cart recursing past that would not fail with an
+ * error here but take the whole process down. The thread runs the tasks [dispatcher] queues until
+ * [close].
+ */
 internal actual fun newGameThread(): GameThread {
-    val context = newSingleThreadContext("kiko-game")
+    val tasks = Channel<Runnable>(Channel.UNLIMITED)
+    val loop: () -> Unit = {
+        runBlocking {
+            while (true) {
+                val task = tasks.receiveCatching().getOrNull() ?: break
+                task.run()
+            }
+        }
+    }
+    startThread(FantasyConsole.RECOMMENDED_STACK_BYTES, loop)
     return object : GameThread {
-        override val dispatcher: CoroutineDispatcher = context
+        override val dispatcher: CoroutineDispatcher =
+            object : CoroutineDispatcher() {
+                override fun dispatch(
+                    context: CoroutineContext,
+                    block: Runnable,
+                ) {
+                    tasks.trySend(block)
+                }
+            }
 
-        override fun close() = context.close()
+        override fun close() {
+            tasks.close()
+        }
     }
 }
+
+/**
+ * Starts a detached thread with a [stackBytes] stack running [body]. One actual per platform
+ * family: Linux and Apple declare pthread_t differently, so the shared native code cannot call
+ * pthread_create itself.
+ */
+internal expect fun startThread(
+    stackBytes: Long,
+    body: () -> Unit,
+)
 
 internal actual fun isMemoryLow(): Boolean = false
 

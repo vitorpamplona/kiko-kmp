@@ -79,6 +79,28 @@ class KikoPlayerThreadTest {
         }
 
     @Test
+    fun pausingDuringASlowFrameDoesNotEndTheGame() =
+        runBlocking {
+            // A frame of _draw that takes a couple of seconds (about 2 s on a laptop; the console
+            // never cuts a frame inside _draw), well under the watchdog's limit. The app goes to
+            // the background in the middle of it.
+            val player =
+                player(
+                    """
+                    n=0
+                    function _draw() n+=1 printh("frame "..n) if n==1 then for i=1,30000 do for j=1,2000 do end end end end
+                    """.trimIndent(),
+                )
+            player.resume()
+            withTimeout(10.seconds) { while ("frame 1" !in log) delay(10.milliseconds) }
+            delay(1200.milliseconds)
+            player.pause()
+            player.resume()
+            withTimeout(30.seconds) { while ("frame 3" !in log) delay(20.milliseconds) }
+            assertEquals(KikoPlayer.Status.Playing, player.status.value)
+        }
+
+    @Test
     fun closeStopsAGameStuckInAFrame() =
         runBlocking {
             val player = player("function _draw() printh('in') while true do end end")

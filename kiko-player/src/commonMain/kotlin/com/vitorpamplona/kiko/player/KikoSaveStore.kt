@@ -24,6 +24,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.getAndUpdate
@@ -58,8 +59,9 @@ public interface KikoSaveStore {
 /**
  * The saves of one running game, between the game and [store]. A save is written as soon as the
  * game makes it, so a game that saves at a checkpoint keeps it even if the app is killed right
- * after. A game that saves every frame is written at most once per [minInterval]; [flush] writes
- * what is left when the player leaves.
+ * after. A game that saves every frame is written at most once per [minInterval], and a save made
+ * while a write is under way goes out in the next one. [flush] writes what is left when the
+ * player leaves; [close] also ends the writer.
  *
  * [load] and [save] are called on the game's thread; the writes run on [scope], which outlives
  * the player so its last saves still go out after it closes.
@@ -72,9 +74,23 @@ internal class SaveBuffer(
     private var saved: Map<String, IntArray> = emptyMap()
     private val unsaved = MutableStateFlow<Map<String, IntArray>>(emptyMap())
     private val writing = Mutex()
-    private var lastWrite: TimeMark? = null
-    private var pending: Job? = null
     private var newIds = 0
+
+    // One writer, woken by any number of saves: a save while it waits or writes is not lost, it
+    // only joins the next write.
+    private val wake = Channel<Unit>(Channel.CONFLATED)
+    private val writer =
+        lazy {
+            scope.launch {
+                var lastWrite: TimeMark? = null
+                while (wake.receiveCatching().isSuccess) {
+                    val wait = lastWrite?.let { minInterval - it.elapsedNow() } ?: Duration.ZERO
+                    if (wait.isPositive()) delay(wait)
+                    lastWrite = TimeSource.Monotonic.markNow()
+                    write()
+                }
+            }
+        }
 
     /** Reads every save once, before the game starts. */
     suspend fun load() {
@@ -89,22 +105,25 @@ internal class SaveBuffer(
     ) {
         // A game uses one save id, a few for a series; a cart that cycles `cartdata` + `run()`
         // through endless ids would otherwise grow the app's store without bound.
-        if (id !in saved && newIds++ >= MAX_NEW_IDS) return
+        if (id !in saved) {
+            if (newIds >= MAX_NEW_IDS) return
+            newIds++
+        }
         saved = saved + (id to values)
         if (store == null) return
         unsaved.update { it + (id to values) }
-        if (pending?.isActive == true) return
-        val wait = lastWrite?.let { minInterval - it.elapsedNow() } ?: Duration.ZERO
-        lastWrite = TimeSource.Monotonic.markNow() + wait.coerceAtLeast(Duration.ZERO)
-        pending =
-            scope.launch {
-                if (wait.isPositive()) delay(wait)
-                write()
-            }
+        writer.value // started on the first save
+        wake.trySend(Unit)
     }
 
     /** Writes what has not been written yet. Safe from any thread. */
     fun flush(): Job = scope.launch { write() }
+
+    /** Writes what has not been written yet and ends the writer: for a player that is gone. */
+    fun close(): Job {
+        wake.close()
+        return flush()
+    }
 
     private suspend fun write() {
         writing.withLock {

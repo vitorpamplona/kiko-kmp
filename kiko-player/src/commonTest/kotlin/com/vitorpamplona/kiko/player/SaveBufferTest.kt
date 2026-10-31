@@ -20,6 +20,7 @@
  */
 package com.vitorpamplona.kiko.player
 
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -85,6 +86,31 @@ class SaveBufferTest {
             saves.flush()
             runCurrent()
             assertEquals(listOf(mapOf("game" to 1), mapOf("game" to 2)), store.writes)
+        }
+
+    @Test
+    fun aSaveMadeWhileTheLastOneIsBeingWrittenIsWrittenToo() =
+        runTest {
+            val gate = CompletableDeferred<Unit>()
+            val writes = ArrayList<Map<String, Int>>()
+            val slowStore =
+                object : KikoSaveStore {
+                    override suspend fun loadAll(): Map<String, IntArray> = emptyMap()
+
+                    override suspend fun save(saves: Map<String, IntArray>) {
+                        if (writes.isEmpty()) gate.await()
+                        writes.add(saves.mapValues { it.value[0] })
+                    }
+                }
+            val saves = SaveBuffer(slowStore, CoroutineScope(StandardTestDispatcher(testScheduler)))
+            saves.save("game", values(1))
+            runCurrent()
+            // The first write is under way (a slow disk) when the game saves again.
+            saves.save("game", values(2))
+            gate.complete(Unit)
+            advanceTimeBy(2.seconds)
+            runCurrent()
+            assertEquals(listOf(mapOf("game" to 1), mapOf("game" to 2)), writes)
         }
 
     @Test

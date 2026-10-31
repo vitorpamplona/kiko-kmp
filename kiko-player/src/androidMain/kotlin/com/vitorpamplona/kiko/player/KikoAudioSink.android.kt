@@ -53,7 +53,9 @@ internal actual fun openPlatformAudioSink(sampleRate: Int): KikoAudioSink? =
                 samples: FloatArray,
                 count: Int,
             ) {
-                track.write(samples, 0, count, AudioTrack.WRITE_BLOCKING)
+                // Never blocks: the frame clock paces the game, and a stalled device must not
+                // freeze its thread. What does not fit now is dropped.
+                track.write(samples, 0, count, AudioTrack.WRITE_NON_BLOCKING)
             }
 
             override fun close() {

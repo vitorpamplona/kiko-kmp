@@ -36,13 +36,17 @@ internal actual fun openPlatformAudioSink(sampleRate: Int): KikoAudioSink? =
                 samples: FloatArray,
                 count: Int,
             ) {
-                if (bytes.size < count * 2) bytes = ByteArray(count * 2)
-                for (i in 0 until count) {
+                // Only what fits now: the frame clock paces the game, and a stalled device (a
+                // headset unplugged) must not block the game's thread, where nothing could
+                // interrupt it. Normally it all fits; when it does not, the rest is dropped.
+                val fits = minOf(count, line.available() / 2)
+                if (bytes.size < fits * 2) bytes = ByteArray(fits * 2)
+                for (i in 0 until fits) {
                     val v = (samples[i] * 32767f).toInt().coerceIn(-32768, 32767)
                     bytes[i * 2] = v.toByte()
                     bytes[i * 2 + 1] = (v shr 8).toByte()
                 }
-                line.write(bytes, 0, count * 2)
+                if (fits > 0) line.write(bytes, 0, fits * 2)
             }
 
             override fun close() {
