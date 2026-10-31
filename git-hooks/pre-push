@@ -12,9 +12,10 @@ echo "$JAVA_HOME"
 java -version
 echo "Running test... "
 
-# The same checks as CI's build job. The Apple tests need a Mac; CI's test-apple job runs them.
-# JS and Wasm run here in Node.js only; CI also runs them in headless Chrome.
-./gradlew spotlessCheck :kiko:checkKotlinAbi :kiko:jvmTest :kiko:testAndroidHostTest :kiko:linuxX64Test :kiko:jsNodeTest :kiko:wasmJsNodeTest :kiko:compileCommonMainKotlinMetadata && python3 tools/agent-hooks/agent_config_check.py
+# The same checks as CI's build job (the task lists are in build.gradle.kts). The Apple tests need
+# a Mac (checkApple); CI's test-apple job runs them. JS and Wasm run here in Node.js only
+# (checkWebNode); CI also runs them in headless Chrome (checkWeb).
+./gradlew checkLinux checkWebNode && python3 tools/agent-hooks/agent_config_check.py
 
 status=$?
 
@@ -24,7 +25,7 @@ if [ "$status" = 0 ] ; then
 else
     echo "*********************************************************"
     echo 1>&2 "Formatting, agent config or tests failed"
-    printf "Run ${GREEN}./gradlew spotlessApply :kiko:checkKotlinAbi :kiko:jvmTest :kiko:testAndroidHostTest :kiko:linuxX64Test :kiko:jsNodeTest :kiko:wasmJsNodeTest :kiko:compileCommonMainKotlinMetadata${NO_COLOR}\n"
+    printf "Run ${GREEN}./gradlew spotlessApply checkLinux checkWebNode${NO_COLOR}\n"
     printf "and ${GREEN}tools/agent-hooks/agent_config_check.py${NO_COLOR}, and fix what fails before pushing...\n"
     echo "*********************************************************"
     exit 1

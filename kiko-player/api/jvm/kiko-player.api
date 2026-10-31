@@ -1,0 +1,93 @@
+public abstract interface class com/vitorpamplona/kiko/player/KikoAudioSink {
+	public abstract fun close ()V
+	public abstract fun write ([FI)V
+}
+
+public final class com/vitorpamplona/kiko/player/KikoPlayer : java/lang/AutoCloseable {
+	public fun <init> (Lkotlin/jvm/functions/Function1;Lcom/vitorpamplona/kiko/player/KikoSaveStore;Lcom/vitorpamplona/kiko/player/KikoPlayerHost;Lkotlin/jvm/functions/Function1;)V
+	public synthetic fun <init> (Lkotlin/jvm/functions/Function1;Lcom/vitorpamplona/kiko/player/KikoSaveStore;Lcom/vitorpamplona/kiko/player/KikoPlayerHost;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun close ()V
+	public final fun copyFrame ([I)J
+	public final fun getFrameNumber ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun getStatus ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun openPauseMenu ()Z
+	public final fun pause ()V
+	public final fun resume ()V
+	public final fun scroll (I)V
+	public final fun setButtons (II)V
+	public static synthetic fun setButtons$default (Lcom/vitorpamplona/kiko/player/KikoPlayer;IIILjava/lang/Object;)V
+	public final fun setPointer (III)V
+	public final fun tapPause ()V
+	public final fun type (Ljava/lang/String;)V
+}
+
+public final class com/vitorpamplona/kiko/player/KikoPlayer$Reason : java/lang/Enum {
+	public static final field NOT_A_CART Lcom/vitorpamplona/kiko/player/KikoPlayer$Reason;
+	public static final field NO_CART Lcom/vitorpamplona/kiko/player/KikoPlayer$Reason;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/vitorpamplona/kiko/player/KikoPlayer$Reason;
+	public static fun values ()[Lcom/vitorpamplona/kiko/player/KikoPlayer$Reason;
+}
+
+public abstract interface class com/vitorpamplona/kiko/player/KikoPlayer$Status {
+}
+
+public final class com/vitorpamplona/kiko/player/KikoPlayer$Status$Failed : com/vitorpamplona/kiko/player/KikoPlayer$Status {
+	public fun <init> (Lcom/vitorpamplona/kiko/player/KikoPlayer$Reason;)V
+	public final fun component1 ()Lcom/vitorpamplona/kiko/player/KikoPlayer$Reason;
+	public final fun copy (Lcom/vitorpamplona/kiko/player/KikoPlayer$Reason;)Lcom/vitorpamplona/kiko/player/KikoPlayer$Status$Failed;
+	public static synthetic fun copy$default (Lcom/vitorpamplona/kiko/player/KikoPlayer$Status$Failed;Lcom/vitorpamplona/kiko/player/KikoPlayer$Reason;ILjava/lang/Object;)Lcom/vitorpamplona/kiko/player/KikoPlayer$Status$Failed;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getReason ()Lcom/vitorpamplona/kiko/player/KikoPlayer$Reason;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/vitorpamplona/kiko/player/KikoPlayer$Status$Loading : com/vitorpamplona/kiko/player/KikoPlayer$Status {
+	public static final field INSTANCE Lcom/vitorpamplona/kiko/player/KikoPlayer$Status$Loading;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/vitorpamplona/kiko/player/KikoPlayer$Status$Playing : com/vitorpamplona/kiko/player/KikoPlayer$Status {
+	public static final field INSTANCE Lcom/vitorpamplona/kiko/player/KikoPlayer$Status$Playing;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/vitorpamplona/kiko/player/KikoPlayer$Status$Stopped : com/vitorpamplona/kiko/player/KikoPlayer$Status {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lcom/vitorpamplona/kiko/player/KikoPlayer$Status$Stopped;
+	public static synthetic fun copy$default (Lcom/vitorpamplona/kiko/player/KikoPlayer$Status$Stopped;Ljava/lang/String;ILjava/lang/Object;)Lcom/vitorpamplona/kiko/player/KikoPlayer$Status$Stopped;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getError ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class com/vitorpamplona/kiko/player/KikoPlayerHost {
+	public fun loadCart (Ljava/lang/String;)[B
+	public fun log (Ljava/lang/String;)V
+	public fun utcOffsetSeconds ()I
+}
+
+public final class com/vitorpamplona/kiko/player/KikoPlayerHost$DefaultImpls {
+	public static fun loadCart (Lcom/vitorpamplona/kiko/player/KikoPlayerHost;Ljava/lang/String;)[B
+	public static fun log (Lcom/vitorpamplona/kiko/player/KikoPlayerHost;Ljava/lang/String;)V
+	public static fun utcOffsetSeconds (Lcom/vitorpamplona/kiko/player/KikoPlayerHost;)I
+}
+
+public abstract interface class com/vitorpamplona/kiko/player/KikoSaveStore {
+	public static final field Companion Lcom/vitorpamplona/kiko/player/KikoSaveStore$Companion;
+	public static final field VALUES I
+	public abstract fun loadAll (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun save (Ljava/util/Map;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/vitorpamplona/kiko/player/KikoSaveStore$Companion {
+	public static final field VALUES I
+}
+

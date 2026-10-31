@@ -11,9 +11,16 @@ Kotlin Multiplatform: its own Lua interpreter with 16:16 fixed-point numbers, th
 map, graphics, text, sound, input, pause menu and cart formats. It depends on nothing but the
 Kotlin stdlib and runs on the JVM, Android, iOS, macOS, Linux, JavaScript and Wasm.
 
-It is headless: your app calls `step()` once per frame, draws the 128x128 pixels it renders and
-plays the samples it mixes. [Amethyst](https://github.com/vitorpamplona/amethyst) uses it to play
-carts posted on Nostr inside the app.
+It comes in three artifacts, so an app takes only what it needs:
+
+| Artifact | Depends on | What it does |
+|---|---|---|
+| `kiko` | the Kotlin stdlib | Runs one cart: your app calls `step()` once per frame, draws the pixels and plays the samples. |
+| `kiko-player` | `kiko`, kotlinx.coroutines | Plays it in real time without UI: the game thread, the frame clock, a hang watchdog, saves and the device's sound. |
+| `kiko-compose` | `kiko-player`, Compose Multiplatform | One composable, `KikoGame`, with the screen, touch controls, keyboard and gamepad, pausing with the app. |
+
+[Amethyst](https://github.com/vitorpamplona/amethyst) uses them to play carts posted on Nostr
+inside the app.
 
 Written from scratch from the public manual and community documentation of the formats. It is not
 affiliated with the makers of any console, and contains none of their code or assets.
@@ -22,7 +29,7 @@ affiliated with the makers of any console, and contains none of their code or as
 
 ```kotlin
 dependencies {
-    implementation("com.vitorpamplona.kiko:kiko:<version>")
+    implementation("com.vitorpamplona.kiko:kiko-compose:<version>") // or kiko-player, or kiko
 }
 ```
 
@@ -30,11 +37,30 @@ dependencies {
 |---|---|
 | JVM | Java 17 |
 | Android | minSdk 26 |
-| Apple | iosArm64, iosSimulatorArm64, macosArm64 |
-| Linux | linuxX64 |
-| Web | js and wasmJs, in browsers and Node.js |
+| Apple | iosArm64, iosSimulatorArm64, macosArm64 (`kiko-compose`: iOS only) |
+| Linux | linuxX64 (not `kiko-compose`) |
+| Web | js and wasmJs, in browsers and Node.js (`kiko-compose`: browsers) |
 
 ## Usage
+
+The whole integration in Compose is one call
+([`OneCall.kt`](demo/shared/src/commonMain/kotlin/com/vitorpamplona/kiko/demo/examples/OneCall.kt)):
+
+```kotlin
+// Loads the cart, plays it with touch controls, keyboard, gamepad and sound, and pauses while the
+// app is in the background. kiko never downloads anything: `download` is your app's own.
+KikoGame(key = url, source = { download(url) }, modifier = Modifier.fillMaxSize())
+```
+
+The next questions each have a short example, compiled and tested with the demo:
+
+| Example | Shows |
+|---|---|
+| [`KeepTheGame.kt`](demo/shared/src/commonMain/kotlin/com/vitorpamplona/kiko/demo/examples/KeepTheGame.kt) | A `KikoPlayer` in a ViewModel, so a rotation keeps the game; saves (`KikoSaveStore`); your own words on screen (`KikoLabels`) |
+| [`OwnLayout.kt`](demo/shared/src/commonMain/kotlin/com/vitorpamplona/kiko/demo/examples/OwnLayout.kt) | The pieces `KikoGame` is made of (`KikoScreen`, `KikoStatus`, `KikoDirectionPad`, `KikoActionButtons`, `kikoKeys`) in a layout of your own |
+| [`Headless.kt`](demo/shared/src/commonMain/kotlin/com/vitorpamplona/kiko/demo/examples/Headless.kt) | `kiko-player` without Compose: play a cart, press buttons, copy frames |
+
+### The runtime alone
 
 ```kotlin
 import com.vitorpamplona.kiko.cart.CartLoader
@@ -55,7 +81,7 @@ val console =
     )
 
 // On one thread with a FantasyConsole.RECOMMENDED_STACK_BYTES stack, every 1/console.fps s:
-console.setButtons(0, held) // bits: left, right, up, down, O, X, pause
+console.setButtons(0, held) // Buttons bits: LEFT, RIGHT, UP, DOWN, O, X, PAUSE
 console.step()
 console.render(pixels) // IntArray(128 * 128), ARGB, with the pause menu over it when open
 play(console.audioBuffer, console.audioSamples) // FantasyConsole.SAMPLE_RATE Hz mono floats
@@ -95,10 +121,33 @@ screen change. Known gaps: the sound filters (noise, buzz, detune, reverb, dampe
 the kana glyphs draw blank, and there is no CPU budget (a heavy cart runs as fast as the host
 allows instead of slowing down). Design notes: [`plans/`](plans).
 
+## Try it
+
+```bash
+./gradlew :demo:run                          # desktop: a small game written for the demo
+./gradlew :demo:run --args="/path/to/game.p8.png"
+./gradlew :demo:wasmJsBrowserDevelopmentRun  # browser
+./gradlew :demo-android:installDebug         # Android, on a connected phone or emulator
+open demo/ios/KikoDemo.xcodeproj             # iOS: pick a simulator or your phone, then Run
+```
+
+Every version offers a short list of games: the demo's own cart, *Snowman* by aquova (CC0) and
+*1492* by A.C. Wright Design (MIT), with each game's author and license on screen. Thanks to
+them for sharing their games; [`demo/CREDITS.md`](demo/CREDITS.md) has the sources and
+licenses. All versions but the browser page can also open a cart of yours. The `pages.yml` workflow publishes that page to
+GitHub Pages from `main`. None of this is published to Maven.
+
+The iOS build runs Gradle from Xcode (`:demo:embedAndSignAppleFrameworkForXcode`), so Xcode
+needs a JDK 17+ it can find (`JAVA_HOME`, or `org.gradle.java.home` in
+`~/.gradle/gradle.properties`) and an Android SDK (`ANDROID_HOME` or `local.properties`), since
+every module also builds for Android. On a phone, pick your team under Signing & Capabilities.
+Games play silently on iOS for now: the player has no iOS sound output yet.
+
 ## Building
 
 ```bash
-./gradlew :kiko:jvmTest
+./gradlew :kiko:jvmTest :kiko-player:jvmTest :kiko-compose:jvmTest
+./gradlew checkLinux checkWebNode   # every check that runs on Linux, as the pre-push hook does
 # Play a folder of carts headless and keep a screenshot of each (carts are not in this repo):
 ./gradlew :kiko:jvmTest --tests '*CartSmokeTest*' -Dkiko.carts=/path/to/carts -Dkiko.out=/tmp/screens
 ```

@@ -1,8 +1,8 @@
 # Fantasy-console cart runtime — 2026-10-30
 
 Status: written and tested; moved from Amethyst's `fantasyConsole` module into this repository
-as `com.vitorpamplona.kiko`. Amethyst's player (detection in notes, the touch controls, saves)
-stays in Amethyst; this note covers the runtime.
+as `com.vitorpamplona.kiko`. This note covers the runtime; the player and the Compose screen that
+came later from Amethyst are in `2026-10-30-player-and-compose.md`.
 
 ## Goal
 

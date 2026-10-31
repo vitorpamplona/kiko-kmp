@@ -28,37 +28,23 @@ jobs:
 
       - uses: ./.github/actions/cache-konan
 
-      - name: Linter (gradle)
-        run: ./gradlew spotlessCheck
-
       # Claude Code and Codex read the same AGENTS.md and skills (see AGENTS.md).
       - name: Check agent config
         run: python3 tools/agent-hooks/agent_config_check.py
 
-      # The public API must match kiko/api/: a change to it is deliberate (updateKotlinAbi) and
-      # visible in review, and a breaking one needs a major version.
-      - name: Check public API
-        run: ./gradlew :kiko:checkKotlinAbi
-
-      - name: Check JVM and Android (host)
-        run: ./gradlew :kiko:jvmTest :kiko:testAndroidHostTest
-
-      # The common tests on a Linux binary: no JVM, a native stack and native memory.
-      - name: Check Linux native
-        run: ./gradlew :kiko:linuxX64Test
+      # The task lists live in the root build.gradle.kts, shared with the pre-push hook and the
+      # release: formatting, the public APIs (a change is deliberate, see updateKotlinAbi), the
+      # JVM, Android host and Linux native tests, and the common code compiled as metadata.
+      - name: Check (gradle)
+        run: ./gradlew checkLinux
 
       # The common tests on Kotlin/JS (which emulates 64-bit Long) and on Kotlin/Wasm, each in
       # Node.js and in headless Chrome.
       - name: Check JavaScript and Wasm
-        run: ./gradlew :kiko:jsTest :kiko:wasmJsTest
-
-      # Apple code compiles on Linux as metadata, so a mistake fails here in minutes instead of
-      # in the macOS job.
-      - name: Check common code compiles
-        run: ./gradlew :kiko:compileCommonMainKotlinMetadata
+        run: ./gradlew checkWeb
 
       - name: Build (gradle)
-        run: ./gradlew assemble
+        run: ./gradlew assemble :demo:wasmJsBrowserDistribution
 
   # Apple test binaries link and run only on macOS.
   test-apple:
@@ -82,4 +68,4 @@ jobs:
 
       # iosArm64 has no simulator to run on; compiling its tests catches device-only drift.
       - name: Check iOS and macOS
-        run: ./gradlew :kiko:iosSimulatorArm64Test :kiko:macosArm64Test :kiko:compileTestKotlinIosArm64
+        run: ./gradlew checkApple

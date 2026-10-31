@@ -311,6 +311,7 @@ public class FantasyConsole(
         interp.abortRequested = true
     }
 
+    /** What [player] (0..7) holds now, as [Buttons] bits. The next frame reads it. */
     public fun setButtons(
         player: Int,
         mask: Int,
@@ -319,7 +320,7 @@ public class FantasyConsole(
     /** Whether the pause menu is open: the game is frozen behind it. */
     public val isPaused: Boolean get() = menu.isOpen
 
-    /** The screen as 128x128 ARGB pixels, with the pause menu over it while it is open. */
+    /** The screen as [SCREEN_SIZE] x [SCREEN_SIZE] ARGB pixels, with the pause menu over it while it is open. */
     public fun render(out: IntArray) {
         graphics.render(out)
         if (menu.isOpen) menu.draw(out)
@@ -543,6 +544,9 @@ public class FantasyConsole(
          * cart with a stack overflow error, like [Interpreter.MAX_DEPTH] does.
          */
         public const val RECOMMENDED_STACK_BYTES: Long = 64L shl 20
+
+        /** The screen's width and height, in pixels: [render] fills `SCREEN_SIZE * SCREEN_SIZE` of them. */
+        public const val SCREEN_SIZE: Int = 128
 
         /** The rate of [audioBuffer]'s samples, in Hz. */
         public const val SAMPLE_RATE: Int = Audio.SAMPLE_RATE

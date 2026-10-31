@@ -26,7 +26,7 @@ jobs:
       - uses: ./.github/actions/cache-konan
 
       - name: Check iOS and macOS
-        run: ./gradlew :kiko:iosSimulatorArm64Test :kiko:macosArm64Test :kiko:compileTestKotlinIosArm64
+        run: ./gradlew checkApple
 
   # Apple klibs cross-compile on Linux; only Apple test binaries need a Mac.
   deploy:
@@ -49,14 +49,12 @@ jobs:
 
       - uses: ./.github/actions/cache-konan
 
-      - name: Linter (gradle)
-        run: ./gradlew spotlessCheck
-
+      # The task lists live in the root build.gradle.kts, shared with CI and the pre-push hook.
       - name: Check
-        run: ./gradlew :kiko:checkKotlinAbi :kiko:jvmTest :kiko:testAndroidHostTest :kiko:linuxX64Test :kiko:jsTest :kiko:wasmJsTest :kiko:compileCommonMainKotlinMetadata
+        run: ./gradlew checkLinux checkWeb
 
       - name: Build (gradle)
-        run: ./gradlew :kiko:assemble
+        run: ./gradlew :kiko:assemble :kiko-player:assemble :kiko-compose:assemble
 
       # Tag v1.2.3 publishes version 1.2.3.
       - name: Set version for tag
@@ -64,7 +62,8 @@ jobs:
           echo "ORG_GRADLE_PROJECT_VERSION_NAME=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
 
       - name: Publish
-        run: ./gradlew :kiko:publishAllPublicationsToMavenCentral --no-configuration-cache
+        # Every module that publishes (kiko, kiko-player, kiko-compose; not the demo).
+        run: ./gradlew publishAllPublicationsToMavenCentral --no-configuration-cache
         env:
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_USERNAME }}
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_PASSWORD }}
