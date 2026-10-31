@@ -541,9 +541,11 @@ public class FantasyConsole(
         /**
          * Room for tens of thousands of nested Lua calls: some carts run a small interpreter of
          * their own that recurses over 10,000 deep. A chain that still runs out of stack ends the
-         * cart with a stack overflow error, like [Interpreter.MAX_DEPTH] does.
+         * cart with a stack overflow error, like [Interpreter.MAX_DEPTH] does. A Kotlin/Native
+         * debug build on macOS (Xcode 27.1) measured about 2.5 KiB of stack per Lua call, so [Interpreter.MAX_DEPTH]
+         * calls need over 120 MiB; the stack is reserved address space, touched only as it grows.
          */
-        public const val RECOMMENDED_STACK_BYTES: Long = 64L shl 20
+        public const val RECOMMENDED_STACK_BYTES: Long = 128L shl 20
 
         /** The screen's width and height, in pixels: [render] fills `SCREEN_SIZE * SCREEN_SIZE` of them. */
         public const val SCREEN_SIZE: Int = 128
