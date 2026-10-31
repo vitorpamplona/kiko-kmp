@@ -27,6 +27,6 @@ import androidx.compose.ui.window.ComposeViewport
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
     ComposeViewport("kiko") {
-        DemoScreen(key = null, source = { null }, onOpen = null)
+        DemoScreen(opened = null, onOpen = null)
     }
 }

@@ -40,8 +40,7 @@ private var opened by mutableStateOf<ByteArray?>(null)
  */
 fun mainViewController(onOpen: () -> Unit): UIViewController =
     ComposeUIViewController {
-        val cart = opened
-        DemoScreen(key = cart, source = { cart }, onOpen = onOpen)
+        DemoScreen(opened = opened, onOpen = onOpen)
     }
 
 /** Plays the cart in [data] (`.p8.png`, `.p8` or `.p8.rom`), from the app's file importer. */

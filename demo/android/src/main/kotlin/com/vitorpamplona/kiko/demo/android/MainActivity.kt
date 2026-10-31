@@ -52,13 +52,7 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 }
-            val current = cart
-            DemoScreen(
-                key = current,
-                source = { current },
-                onOpen = { picker.launch(arrayOf("*/*")) },
-                onExit = ::finish,
-            )
+            DemoScreen(opened = cart, onOpen = { picker.launch(arrayOf("*/*")) }, onExit = ::finish)
         }
     }
 }

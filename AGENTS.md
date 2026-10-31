@@ -45,7 +45,10 @@ and moved here so any app can embed it.
   `:demo:wasmJsBrowserDevelopmentRun`; `pages.yml` publishes it) and iOS (`iosMain`, the `DemoKit`
   framework) entry points; `demo/android` (`:demo-android`, `installDebug`) is the Android app
   around it; `demo/ios` is the Xcode project (SwiftUI shell and file importer), which builds
-  `DemoKit` through Gradle. None of it is published to Maven.
+  `DemoKit` through Gradle. None of it is published to Maven. `demo/shared/.../examples/` holds
+  the short, tested examples the README links to (`OneCall`, `KeepTheGame`, `OwnLayout`,
+  `Headless`): show the API there, in the fewest lines that work, not in the README's own code
+  blocks, which nothing compiles.
 - `build-logic/` — the build's own plugins: `kiko.library` (a published module with no UI, every
   target) and `kiko.compose-library` (a published Compose module) set the targets, JVM 17, the
   Android SDK and namespace, the explicit API and its check, and publishing. A module's own build

@@ -65,6 +65,8 @@ kotlin {
                 implementation(libs.compose.foundation)
                 // The bundled games (composeResources/files/carts; see demo/CREDITS.md).
                 implementation(libs.compose.components.resources)
+                // For the examples/KeepTheGame example only.
+                implementation(libs.lifecycle.viewmodel.compose)
             }
         }
 

@@ -31,8 +31,6 @@ import androidx.compose.ui.window.MenuBar
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.awt.FileDialog
 import java.awt.Frame
 import java.io.File
@@ -44,29 +42,22 @@ import java.io.File
  */
 fun main(args: Array<String>) =
     application {
-        var cart by remember { mutableStateOf(args.firstOrNull()?.let(::File)) }
-        val title = cart?.name ?: "kiko demo"
+        var cart by remember { mutableStateOf(args.firstOrNull()?.let { File(it).readBytes() }) }
         Window(
             onCloseRequest = ::exitApplication,
-            title = title,
+            title = "kiko demo",
             state = rememberWindowState(width = 600.dp, height = 760.dp),
         ) {
             MenuBar {
                 Menu("File") {
                     Item("Open cart…", shortcut = KeyShortcut(Key.O, ctrl = true)) {
-                        pickCart(window)?.let { cart = it }
+                        pickCart(window)?.let { cart = it.readBytes() }
                     }
                     Separator()
                     Item("Quit", shortcut = KeyShortcut(Key.Q, ctrl = true), onClick = ::exitApplication)
                 }
             }
-            val file = cart
-            DemoScreen(
-                key = file,
-                source = { withContext(Dispatchers.IO) { file?.readBytes() } },
-                onOpen = { pickCart(window)?.let { cart = it } },
-                onExit = ::exitApplication,
-            )
+            DemoScreen(opened = cart, onOpen = { pickCart(window)?.let { cart = it.readBytes() } }, onExit = ::exitApplication)
         }
     }
 

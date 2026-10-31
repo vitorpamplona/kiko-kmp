@@ -43,50 +43,22 @@ dependencies {
 
 ## Usage
 
-### In Compose
+The whole integration in Compose is one call
+([`OneCall.kt`](demo/shared/src/commonMain/kotlin/com/vitorpamplona/kiko/demo/examples/OneCall.kt)):
 
 ```kotlin
-import com.vitorpamplona.kiko.compose.KikoGame
-
-// Loads the cart, plays it with touch controls, keys and sound, and pauses in the background.
-KikoGame(
-    key = url,
-    source = { httpClient.get(url) }, // the cart's bytes, or null; kiko never downloads anything
-    modifier = Modifier.fillMaxSize(),
-)
+// Loads the cart, plays it with touch controls, keyboard, gamepad and sound, and pauses while the
+// app is in the background. kiko never downloads anything: `download` is your app's own.
+KikoGame(key = url, source = { download(url) }, modifier = Modifier.fillMaxSize())
 ```
 
-An app that keeps the game across an Android configuration change holds a `KikoPlayer` in its
-ViewModel and passes it to `KikoGame(player)`. `KikoLabels` carries the app's translations, and a
-`KikoSaveStore` keeps what games save. `pauseInBackground` and `requestFocus` turn off the two
-things `KikoGame` does on its own.
+The next questions each have a short example, compiled and tested with the demo:
 
-For a layout of your own, `KikoGame` is made of pieces you can use directly:
-
-```kotlin
-val player = rememberKikoPlayer(key = url) { httpClient.get(url) }
-val input = rememberKikoInput(player) // one player's buttons, from every control
-Box(Modifier.kikoKeys(input, onBack = { … }).focusable()) {
-    KikoScreen(player, Modifier.fillMaxSize())
-    KikoStatus(player, Modifier.fillMaxSize())
-}
-KikoDirectionPad(input, Modifier.size(160.dp))
-KikoActionButtons(input, Modifier.size(160.dp))
-```
-
-### Without UI
-
-```kotlin
-import com.vitorpamplona.kiko.player.KikoPlayer
-import com.vitorpamplona.kiko.runtime.Buttons
-
-val player = KikoPlayer(source = { File(path).readBytes() }, saves = mySaveStore)
-player.resume() // loads, then runs on its own thread at the game's frame rate
-val pixels = IntArray(128 * 128)
-player.frameNumber.collect { player.copyFrame(pixels); draw(pixels) } // ARGB, your own buffer
-player.setButtons(Buttons.LEFT or Buttons.O) // player 1; setButtons(mask, playerIndex = 1) for 2
-player.pause() // when the app goes to the background; close() when done
-```
+| Example | Shows |
+|---|---|
+| [`KeepTheGame.kt`](demo/shared/src/commonMain/kotlin/com/vitorpamplona/kiko/demo/examples/KeepTheGame.kt) | A `KikoPlayer` in a ViewModel, so a rotation keeps the game; saves (`KikoSaveStore`); your own words on screen (`KikoLabels`) |
+| [`OwnLayout.kt`](demo/shared/src/commonMain/kotlin/com/vitorpamplona/kiko/demo/examples/OwnLayout.kt) | The pieces `KikoGame` is made of (`KikoScreen`, `KikoStatus`, `KikoDirectionPad`, `KikoActionButtons`, `kikoKeys`) in a layout of your own |
+| [`Headless.kt`](demo/shared/src/commonMain/kotlin/com/vitorpamplona/kiko/demo/examples/Headless.kt) | `kiko-player` without Compose: play a cart, press buttons, copy frames |
 
 ### The runtime alone
 
