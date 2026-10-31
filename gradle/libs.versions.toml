@@ -1,5 +1,5 @@
 [versions]
-agp = "9.4.1"
+agp = "9.5.0"
 # kiko-player and kiko-compose only (kiko itself stays on the stdlib). Keep these at or below
 # Amethyst's: a library pinning a newer one forces every app that uses it to upgrade.
 composeMultiplatform = "1.12.2"
