@@ -25,11 +25,14 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
+import java.lang.ref.WeakReference
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -98,6 +101,63 @@ class KikoPlayerThreadTest {
             player.resume()
             withTimeout(30.seconds) { while ("frame 3" !in log) delay(20.milliseconds) }
             assertEquals(KikoPlayer.Status.Playing, player.status.value)
+        }
+
+    /** A weak reference to the game [player] runs now: what its cart built stays reachable through it. */
+    private fun weakGame(player: KikoPlayer) = WeakReference(player.console!!)
+
+    private fun collected(ref: WeakReference<*>): Boolean {
+        repeat(50) {
+            System.gc()
+            if (ref.get() == null) return true
+            Thread.sleep(100)
+        }
+        return false
+    }
+
+    // A table of 50,000 tables, which nothing outside the game holds.
+    private val bigTable = "big={} for i=1,50000 do big[i]={i} end "
+
+    @Test
+    fun aGameThatStoppedLetsGoOfItsMemoryButKeepsItsLastFrame() =
+        runBlocking<Unit> {
+            val loads = AtomicInteger()
+            val code = bigTable + "f=0 function _update() f+=1 if f==30 then stop() end end function _draw() cls(8) end"
+            val player =
+                KikoPlayer(
+                    source = {
+                        loads.incrementAndGet()
+                        "__lua__\n$code\n".encodeToByteArray()
+                    },
+                    openAudio = { null },
+                ).also { players.add(it) }
+            player.resume()
+            withTimeout(10.seconds) { player.frameNumber.first { it > 0 } }
+            val game = weakGame(player)
+            withTimeout(10.seconds) { player.status.first { it is KikoPlayer.Status.Stopped } }
+            assertTrue(collected(game), "the stopped game is still reachable")
+            val pixels = IntArray(FantasyConsole.SCREEN_SIZE * FantasyConsole.SCREEN_SIZE)
+            assertTrue(player.copyFrame(pixels) > 0)
+            assertEquals(0xFFFF004D.toInt(), pixels[0])
+            // Resuming a game that ended neither restarts nor reloads it.
+            player.resume()
+            delay(200.milliseconds)
+            assertEquals(1, loads.get())
+            assertIs<KikoPlayer.Status.Stopped>(player.status.value)
+        }
+
+    @Test
+    fun closeLetsGoOfTheGameButKeepsItsLastFrame() =
+        runBlocking {
+            val player = player(bigTable + "function _draw() cls(8) end")
+            player.resume()
+            withTimeout(10.seconds) { player.frameNumber.first { it > 2 } }
+            val game = weakGame(player)
+            player.close()
+            assertTrue(collected(game), "the closed game is still reachable")
+            val pixels = IntArray(FantasyConsole.SCREEN_SIZE * FantasyConsole.SCREEN_SIZE)
+            assertTrue(player.copyFrame(pixels) > 0)
+            assertEquals(0xFFFF004D.toInt(), pixels[0])
         }
 
     @Test

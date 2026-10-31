@@ -446,6 +446,7 @@ internal class Api(
             one(parsed ?: if (flags and 4 != 0) 0 else null)
         }
         fn("chr") { args ->
+            interp.chargeString(args.size)
             val sb = StringBuilder()
             for (i in args.indices) sb.append((args.int(i) and 0xff).toChar())
             one(sb.toString())
@@ -454,6 +455,7 @@ internal class Api(
             val s = args.getOrNull(0)?.let(::tostr) ?: return@fn NONE
             val start = args.int(1, 1)
             val n = args.int(2, 1)
+            interp.charge(Interpreter.OBJECT_BYTES * maxOf(n, 0))
             List(maxOf(n, 0)) { k ->
                 val i = start + k
                 if (i in 1..s.length) Fix.fromInt(s[i - 1].code) else null
@@ -474,12 +476,23 @@ internal class Api(
             } else if (j > n) {
                 j = n
             }
-            one(if (i > j) "" else s.substring(i - 1, j))
+            if (i > j) return@fn one("")
+            interp.chargeString(j - i + 1)
+            one(s.substring(i - 1, j))
         }
         fn("split") { args ->
             val s = tostr(args.getOrNull(0))
             val sep = args.getOrNull(1) ?: ","
             val convert = args.size < 3 || args.bool(2)
+            // At most this many parts, each a string, a list slot and a table slot: charged before
+            // splitting, since one call on a long string builds millions of them.
+            val maxParts =
+                when {
+                    sep is Int -> s.length / maxOf(1, Fix.toInt(sep)) + 1
+                    sep == "" -> s.length
+                    else -> s.length / maxOf(1, tostr(sep).length) + 1
+                }
+            interp.charge(2L * s.length + maxParts * (2 * Interpreter.OBJECT_BYTES))
             val parts =
                 when {
                     sep is Int -> s.chunked(maxOf(1, Fix.toInt(sep)))
@@ -553,6 +566,7 @@ internal class Api(
             val handler = t.metatable?.rawget("__pairs")
             if (handler != null) return@fn interp.call(handler, listOf(t)).take(3)
             val keys = t.keys()
+            interp.charge(Interpreter.OBJECT_BYTES * keys.size)
             var i = 0
             val iter =
                 NativeFunction("pairs") {
@@ -600,9 +614,13 @@ internal class Api(
             val t = args.table(0) ?: return@fn NONE
             val i = args.int(1, 1)
             val j = args.int(2, t.length())
-            if (j < i) NONE else List(minOf(j - i + 1, 8192)) { t.rawgetInt(i + it) }
+            if (j < i) return@fn NONE
+            val n = minOf(j - i + 1, 8192)
+            interp.charge(Interpreter.OBJECT_BYTES * n)
+            List(n) { t.rawgetInt(i + it) }
         }
         fn("pack") { args ->
+            interp.charge(Interpreter.OBJECT_BYTES * args.size)
             val t = LuaTable(args.size)
             args.forEachIndexed { i, v -> t.rawsetInt(i + 1, v) }
             t.rawset("n", Fix.fromInt(args.size))

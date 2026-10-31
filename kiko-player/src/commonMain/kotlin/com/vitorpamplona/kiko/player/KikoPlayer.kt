@@ -126,8 +126,17 @@ public class KikoPlayer internal constructor(
 
     private val scope = CoroutineScope(SupervisorJob())
 
+    /**
+     * The game, from its load until it ends or the player closes. Dropped then, with the cart's
+     * whole Lua heap, while [buffers] keep its last frame. Internal for the tests.
+     */
     @Volatile
-    private var console: FantasyConsole? = null
+    internal var console: FantasyConsole? = null
+        private set
+
+    // The game ended (Stopped): [resume] neither restarts nor reloads it.
+    @Volatile
+    private var ended = false
 
     // Three buffers: the game draws into one while a reader may still be copying the last.
     // [published] counts frames; frame n is in buffers[(n - 1) % 3].
@@ -256,11 +265,17 @@ public class KikoPlayer internal constructor(
 
     /** Loads the cart the first time, then runs it until [pause] or [close]. Call from one thread. */
     public fun resume() {
-        if (closed || loop?.isActive == true) return
+        if (closed || ended || loop?.isActive == true) return
         loop =
             scope.launch(dispatcher) {
-                val game = console ?: load() ?: return@launch
-                play(game)
+                try {
+                    val game = console ?: load() ?: return@launch
+                    play(game)
+                } finally {
+                    // A close() during the load or the last frame: the game is dropped here,
+                    // once this thread is done with it.
+                    if (closed) console = null
+                }
             }
     }
 
@@ -275,11 +290,16 @@ public class KikoPlayer internal constructor(
         saveBuffer.flush()
     }
 
-    /** Stops the game for good, writes its saves and frees its thread. */
+    /**
+     * Stops the game for good, writes its saves and frees its thread and the game's memory.
+     * [copyFrame] still returns its last frame.
+     */
     override fun close() {
         if (closed) return
         closed = true
         console?.abort()
+        // A frame running now keeps its own reference until it returns; nothing else needs one.
+        console = null
         loop?.cancel()
         loop = null
         // The last saves are written outside [scope], which is going away.
@@ -330,8 +350,7 @@ public class KikoPlayer internal constructor(
 
     private suspend fun play(game: FantasyConsole) {
         if (game.state != FantasyConsole.State.RUNNING) {
-            publishFrame(game)
-            _status.value = Status.Stopped(if (hung) NOT_RESPONDING else game.error)
+            end(game)
             return
         }
         _status.value = Status.Playing
@@ -358,11 +377,11 @@ public class KikoPlayer internal constructor(
                     pauseTapDelivered = false
                     pauseTapPending = false
                 }
-                publishFrame(game)
                 if (game.state != FantasyConsole.State.RUNNING) {
-                    _status.value = Status.Stopped(if (hung) NOT_RESPONDING else game.error)
+                    end(game)
                     break
                 }
+                publishFrame(game)
                 sound?.write(game.audioBuffer, game.audioSamples)
                 deadline += 1.seconds / game.fps
                 val wait = -deadline.elapsedNow()
@@ -379,6 +398,14 @@ public class KikoPlayer internal constructor(
             watchdog.cancel()
             sound?.close()
         }
+    }
+
+    /** Shows the game's last frame and lets go of it: the frame stays, the cart's memory goes. */
+    private fun end(game: FantasyConsole) {
+        publishFrame(game)
+        ended = true
+        console = null
+        _status.value = Status.Stopped(if (hung) NOT_RESPONDING else game.error)
     }
 
     private fun publishFrame(game: FantasyConsole) {

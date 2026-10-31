@@ -66,7 +66,8 @@ public interface ConsoleHost {
 
     /**
      * Whether the process is short of memory. Asked every thousand or so loop iterations and
-     * calls; true ends the cart with "out of memory" before it takes the app's heap with it.
+     * calls, and each time the cart has built a few more megabytes of strings and tables; true
+     * ends the cart with "out of memory" before it takes the app's heap with it.
      */
     public fun memoryLow(): Boolean = false
 }
@@ -168,8 +169,9 @@ public class FantasyConsole(
         graphics.reset()
         interp = Interpreter()
         interp.memory = ram
+        interp.memoryHook = ::checkMemory
         interp.frameHook = {
-            if (host.memoryLow()) throw LuaError("out of memory")
+            checkMemory()
             if (!inDraw && !inCallback && frameStart.elapsedNow() > 1.seconds / fps) waitFrame()
         }
         Api(this, interp).install()
@@ -192,6 +194,11 @@ public class FantasyConsole(
                 fail(e.message ?: "syntax error")
                 null
             }
+    }
+
+    /** Ends the cart with "out of memory" while the host is short of it. */
+    private fun checkMemory() {
+        if (host.memoryLow()) throw LuaError("out of memory")
     }
 
     /** Runs one frame. Does nothing once the cart has stopped. */

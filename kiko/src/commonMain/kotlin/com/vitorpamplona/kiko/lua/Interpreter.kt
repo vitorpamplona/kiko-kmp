@@ -93,6 +93,35 @@ internal class Interpreter {
         if (++backEdges and (BACK_EDGE_SAMPLE - 1) == 0) frameHook?.invoke()
     }
 
+    /**
+     * Asked once the big allocators have built [ALLOCATION_BUDGET] bytes since it last was: the
+     * console throws "out of memory" here when the host is short. The sampled check in [backEdge]
+     * alone lets a loop that builds a megabyte string per iteration take a gigabyte first.
+     */
+    var memoryHook: (() -> Unit)? = null
+
+    /** Estimated bytes allocated by [charge] since [memoryHook] last ran. */
+    private var allocated = 0L
+
+    /**
+     * Counts [bytes] an operator or a built-in is about to allocate, before it does, and runs
+     * [memoryHook] each time the count passes [ALLOCATION_BUDGET]. Only the allocators whose size
+     * the cart controls call it (concatenation, `sub`, `split`, ...), so the hot paths never do.
+     */
+    fun charge(bytes: Long) {
+        allocated += bytes
+        if (allocated >= ALLOCATION_BUDGET) {
+            allocated = 0
+            memoryHook?.invoke()
+            // The next back edge runs [frameHook] too, so a loop of slow allocations still ends
+            // its frame on time; [backEdge] itself stays as cheap as it was.
+            backEdges = -1
+        }
+    }
+
+    /** [charge] for a new string of [length] characters, two bytes each where strings are UTF-16. */
+    fun chargeString(length: Int) = charge(OBJECT_BYTES + 2L * length)
+
     /** Compiles [source] into the function a cart's top-level code runs as. */
     fun load(
         source: String,
@@ -176,12 +205,28 @@ internal class Interpreter {
         what: String? = null,
     ): Values {
         if (fn is LuaFunction) return fn.call(this, args)
-        if (fn is LuaTable) {
-            val handler = fn.metatable?.rawget("__call")
-            if (handler != null) return call(handler, listOf(fn) + args)
+        // A table's `__call` may itself be a callable table: each step passes the table it went
+        // through as a new first argument. Walked in a loop with the `__index` cap, so a table
+        // that is its own handler is an error instead of an endless chain no abort could stop.
+        var callee = fn
+        var argv = args
+        var steps = 0
+        while (steps++ < MAX_META_CHAIN) {
+            val handler = (callee as? LuaTable)?.metatable?.rawget("__call") ?: break
+            backEdge()
+            argv =
+                ArrayList<Any?>(argv.size + 1).apply {
+                    add(callee)
+                    addAll(argv)
+                }
+            if (handler is LuaFunction) return handler.call(this, argv)
+            callee = handler
+        }
+        if (callee is LuaTable && callee.metatable?.rawget("__call") != null) {
+            throw LuaError("'__call' chain too long; possible loop")
         }
         val name = what?.let { " ($it)" } ?: describe(source)
-        throw LuaError("attempt to call a ${typeName(fn)} value$name")
+        throw LuaError("attempt to call a ${typeName(callee)} value$name")
     }
 
     private fun describe(source: Expr?): String = source?.describe()?.let { " ($it)" } ?: ""
@@ -351,6 +396,7 @@ internal class Interpreter {
             val sy = tostr(y)
             // The original has 2 MiB for everything; this stops `s = s .. s` before the app's heap.
             if (sx.length.toLong() + sy.length > MAX_STRING) throw LuaError("out of memory")
+            chargeString(sx.length + sy.length)
             return sx + sy
         }
         val handler = metamethod(x, y, "__concat")
@@ -431,6 +477,12 @@ internal class Interpreter {
         const val MAX_DEPTH = 50000
         private const val BACK_EDGE_SAMPLE = 1024
         private const val MAX_META_CHAIN = 100
+
+        /** Bytes the big allocators may build between two memory checks (see [charge]). */
+        const val ALLOCATION_BUDGET = 8L shl 20
+
+        /** What one more object costs besides its contents: a header and the slot that holds it. */
+        const val OBJECT_BYTES = 32L
 
         private val ARITH_EVENTS =
             mapOf(

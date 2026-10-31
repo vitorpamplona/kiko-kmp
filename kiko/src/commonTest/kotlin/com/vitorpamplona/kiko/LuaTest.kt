@@ -152,6 +152,21 @@ class LuaTest {
     }
 
     @Test
+    fun callableTablesChain() {
+        val out =
+            run(
+                """
+                inner = setmetatable({}, {__call = function(self, outer, k) return k + 1 end})
+                outer = setmetatable({}, {__call = inner})
+                printh(outer(41))
+                pair = setmetatable({}, {__add = inner})
+                printh(pair + 9)
+                """.trimIndent(),
+            )
+        assertEquals(listOf("42", "10"), out)
+    }
+
+    @Test
     fun gotoAndLabels() {
         val out =
             run(
