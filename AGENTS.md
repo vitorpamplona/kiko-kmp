@@ -39,9 +39,12 @@ and moved here so any app can embed it.
   (`rememberKikoInput`). Also `rememberKikoPlayer` and `KikoLabels`. Platform code: the frame
   bitmap and edge-gesture exclusion (`androidMain`, `skikoMain`). No Material, no string
   resources, no app chrome.
-- `demo/` — kiko-compose on the desktop (`./gradlew :demo:run [--args=<cart>]`) and in a browser
-  (`wasmJsMain`, `:demo:wasmJsBrowserDevelopmentRun`; `pages.yml` publishes it), with a small cart
-  of our own (`DemoCart.kt`). Not published to Maven.
+- `demo/` — kiko-compose on every platform, with a small cart of our own (`DemoCart.kt`) and one
+  screen (`DemoScreen`): the desktop (`./gradlew :demo:run [--args=<cart>]`), a browser
+  (`wasmJsMain`, `:demo:wasmJsBrowserDevelopmentRun`; `pages.yml` publishes it), and the `DemoKit`
+  framework for iOS (`iosMain`). `demo-android/` is the Android app around it
+  (`:demo-android:installDebug`); `demo-ios/` is the Xcode project (SwiftUI shell and file
+  importer), which builds `DemoKit` through Gradle. None of it is published to Maven.
 - `plans/` — design notes, `YYYY-MM-DD-<slug>.md`.
 - `tools/agent-hooks/` — the checks Claude Code and Codex run before a push (see below).
 

@@ -83,4 +83,4 @@ jobs:
 
       # iosArm64 has no simulator to run on; compiling its tests catches device-only drift.
       - name: Check iOS and macOS
-        run: ./gradlew :kiko:iosSimulatorArm64Test :kiko:macosArm64Test :kiko:compileTestKotlinIosArm64 :kiko-player:iosSimulatorArm64Test :kiko-player:macosArm64Test :kiko-compose:compileKotlinIosArm64 :kiko-compose:compileKotlinIosSimulatorArm64
+        run: ./gradlew :kiko:iosSimulatorArm64Test :kiko:macosArm64Test :kiko:compileTestKotlinIosArm64 :kiko-player:iosSimulatorArm64Test :kiko-player:macosArm64Test :kiko-compose:compileKotlinIosArm64 :kiko-compose:compileKotlinIosSimulatorArm64 :demo:linkDebugFrameworkIosSimulatorArm64

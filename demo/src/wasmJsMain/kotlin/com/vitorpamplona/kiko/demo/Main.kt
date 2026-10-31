@@ -20,16 +20,13 @@
  */
 package com.vitorpamplona.kiko.demo
 
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.ExperimentalComposeUiApi
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.window.ComposeViewport
-import com.vitorpamplona.kiko.compose.KikoGame
 
 /** Plays [DEMO_CART] in the page's `#kiko` element. */
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
     ComposeViewport("kiko") {
-        KikoGame(source = { DEMO_CART.encodeToByteArray() }, modifier = Modifier.fillMaxSize())
+        DemoScreen(key = Unit, source = { null }, onOpen = null)
     }
 }

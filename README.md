@@ -152,14 +152,22 @@ allows instead of slowing down). Design notes: [`plans/`](plans).
 ## Try it
 
 ```bash
-./gradlew :demo:run                          # a small game written for the demo
+./gradlew :demo:run                          # desktop: a small game written for the demo
 ./gradlew :demo:run --args="/path/to/game.p8.png"
-./gradlew :demo:wasmJsBrowserDevelopmentRun  # the same demo in a browser
+./gradlew :demo:wasmJsBrowserDevelopmentRun  # browser
+./gradlew :demo-android:installDebug         # Android, on a connected phone or emulator
+open demo-ios/KikoDemo.xcodeproj             # iOS: pick a simulator or your phone, then Run
 ```
 
-The demo is a desktop window over `kiko-compose` (File > Open plays another cart), and a web page
-that plays its own cart; the `pages.yml` workflow publishes the page to GitHub Pages from `main`.
-It is not published to Maven.
+Every version plays the demo's own cart and has an "Open cart" button for one of yours, except
+the browser page, which plays only its own. The `pages.yml` workflow publishes that page to
+GitHub Pages from `main`. None of this is published to Maven.
+
+The iOS build runs Gradle from Xcode (`:demo:embedAndSignAppleFrameworkForXcode`), so Xcode
+needs a JDK 17+ it can find (`JAVA_HOME`, or `org.gradle.java.home` in
+`~/.gradle/gradle.properties`) and an Android SDK (`ANDROID_HOME` or `local.properties`), since
+every module also builds for Android. On a phone, pick your team under Signing & Capabilities.
+Games play silently on iOS for now: the player has no iOS sound output yet.
 
 ## Building
 

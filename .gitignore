@@ -15,3 +15,8 @@ captures
 .cxx
 
 kotlin-js-store
+
+# Xcode (demo-ios)
+xcuserdata/
+*.xcworkspace/
+DerivedData/
