@@ -22,6 +22,8 @@ package com.vitorpamplona.kiko.compose
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -45,6 +47,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleStartEffect
 import com.vitorpamplona.kiko.player.KikoPlayer
@@ -104,7 +107,8 @@ public fun rememberKikoPlayer(
  *
  * The game runs while this is shown. With [pauseInBackground] it also pauses while the app is in
  * the background (Home, a minimized window), which writes its saves before the system may kill
- * the app. With [requestFocus] it takes the keyboard focus when it appears.
+ * the app. With [requestFocus] it takes the keyboard focus when it appears or [player] changes,
+ * and again when the game is touched or clicked.
  *
  * Escape (and a key-event Back) opens the game's pause menu; pressed again it calls [onExit], or
  * closes the menu when there is none. The system Back gesture is the app's to route: call
@@ -143,13 +147,21 @@ public fun KikoGame(
     }
 
     val focus = remember { FocusRequester() }
-    if (requestFocus) LaunchedEffect(Unit) { focus.requestFocus() }
+    // A new game takes the keyboard, and a touch or click on the game takes it back from
+    // whatever had it since (a menu the app showed over the game, a text field beside it).
+    if (requestFocus) LaunchedEffect(player) { focus.requestFocus() }
 
     Box(
         modifier
             .background(Color.Black)
             .focusRequester(focus)
-            .kikoKeys(input, onBack = back)
+            .pointerInput(focus) {
+                // Requiring nothing unconsumed: the pad and buttons consume their touches first.
+                awaitEachGesture {
+                    awaitFirstDown(requireUnconsumed = false)
+                    focus.requestFocus()
+                }
+            }.kikoKeys(input, onBack = back)
             .focusable(),
     ) {
         BoxWithConstraints(Modifier.fillMaxSize()) {

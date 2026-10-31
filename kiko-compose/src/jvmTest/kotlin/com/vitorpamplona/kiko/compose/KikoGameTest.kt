@@ -31,9 +31,11 @@ import androidx.compose.ui.InternalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.unit.Density
 import com.vitorpamplona.kiko.player.KikoPlayer
 import com.vitorpamplona.kiko.player.KikoPlayerHost
@@ -163,6 +165,54 @@ class KikoGameTest {
             }
         val image = renderUntil { it.argbAt(256, 256) == RED }
         assertEquals(RED, image.argbAt(256, 256))
+        scene.sendKeyEvent(KeyEvent(Key.Z, KeyEventType.KeyDown))
+        renderUntil { "o" in log }
+        assertTrue("o" in log, "$log")
+    }
+
+    // Building a KeyEvent by hand is compose-ui's internal API; fine for a test of the same version.
+    @OptIn(InternalComposeUiApi::class)
+    @Test
+    fun aClickOnTheGameTakesTheKeyboardBack() {
+        val log = CopyOnWriteArrayList<String>()
+        var player: KikoPlayer? = null
+        val other = FocusRequester()
+        scene =
+            ImageComposeScene(width = 512, height = 512, density = Density(1f)) {
+                val host =
+                    remember {
+                        object : KikoPlayerHost {
+                            override fun log(message: String) {
+                                log.add(message)
+                            }
+                        }
+                    }
+                val game =
+                    rememberKikoPlayer(key = Unit, host = host) {
+                        cart("function _update() if (btn(4)) printh('o') end function _draw() cls(8) end")
+                    }
+                player = game
+                Box(Modifier.fillMaxSize()) {
+                    KikoGame(game, Modifier.fillMaxSize(), showTouchControls = false)
+                    // Something else that can hold the keyboard, as a menu over the game would.
+                    Box(Modifier.focusRequester(other).focusable())
+                }
+            }
+        renderUntil { player?.status?.value == KikoPlayer.Status.Playing }
+        other.requestFocus()
+        render()
+        scene.sendKeyEvent(KeyEvent(Key.Z, KeyEventType.KeyDown))
+        scene.sendKeyEvent(KeyEvent(Key.Z, KeyEventType.KeyUp))
+        // Several game frames, any of which would have printed had the key reached the game.
+        repeat(10) {
+            render()
+            Thread.sleep(30)
+        }
+        assertTrue("o" !in log, "the game had the keyboard while something else held it: $log")
+
+        scene.sendPointerEvent(PointerEventType.Press, Offset(256f, 256f))
+        scene.sendPointerEvent(PointerEventType.Release, Offset(256f, 256f))
+        render()
         scene.sendKeyEvent(KeyEvent(Key.Z, KeyEventType.KeyDown))
         renderUntil { "o" in log }
         assertTrue("o" in log, "$log")
