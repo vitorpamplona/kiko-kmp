@@ -49,6 +49,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.min
 import androidx.lifecycle.compose.LifecycleStartEffect
 import com.vitorpamplona.kiko.player.KikoPlayer
 import com.vitorpamplona.kiko.player.KikoPlayerHost
@@ -166,7 +167,10 @@ public fun KikoGame(
     ) {
         BoxWithConstraints(Modifier.fillMaxSize()) {
             val wide = maxWidth > maxHeight
-            val control = min(maxWidth.value, maxHeight.value).coerceIn(120f, 200f).dp * if (wide) 0.9f else 0.8f
+            // Each control is a square; on a tall area both sit side by side under the screen, so
+            // a narrow one shrinks them to fit its width.
+            val preferred = min(maxWidth.value, maxHeight.value).coerceIn(120f, 200f).dp * if (wide) 0.9f else 0.8f
+            val control = if (wide) preferred else min(preferred, (maxWidth - SIDE_GAP * 2 - 8.dp) / 2)
             when {
                 !showTouchControls -> KikoScreen(player, Modifier.fillMaxSize())
                 wide ->
@@ -179,24 +183,31 @@ public fun KikoGame(
                         KikoScreen(player, Modifier.weight(1f).aspectRatio(1f, matchHeightConstraintsFirst = true))
                         KikoActionButtons(input, Modifier.size(control), labels.actionButtons)
                     }
-                else ->
+                else -> {
+                    // The screen takes what the controls leave, so they keep their square size.
+                    val screen = min(maxWidth, maxHeight - TOP_GAP - control - BOTTOM_GAP).coerceAtLeast(0.dp)
                     Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Spacer(Modifier.height(48.dp))
-                        KikoScreen(player, Modifier.fillMaxWidth().aspectRatio(1f))
+                        Spacer(Modifier.height(TOP_GAP))
+                        KikoScreen(player, Modifier.size(screen))
                         Spacer(Modifier.weight(1f))
                         Row(
-                            Modifier.fillMaxWidth().padding(horizontal = 24.dp),
+                            Modifier.fillMaxWidth().padding(horizontal = SIDE_GAP),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween,
                         ) {
                             KikoDirectionPad(input, Modifier.size(control), labels.directionPad)
                             KikoActionButtons(input, Modifier.size(control), labels.actionButtons)
                         }
-                        Spacer(Modifier.height(24.dp))
+                        Spacer(Modifier.height(BOTTOM_GAP))
                     }
+                }
             }
         }
 
         KikoStatus(player, Modifier.fillMaxSize(), labels)
     }
 }
+
+private val TOP_GAP = 48.dp
+private val BOTTOM_GAP = 24.dp
+private val SIDE_GAP = 24.dp

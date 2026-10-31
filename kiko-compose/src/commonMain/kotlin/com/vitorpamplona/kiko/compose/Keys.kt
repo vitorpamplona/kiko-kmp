@@ -21,6 +21,7 @@
 package com.vitorpamplona.kiko.compose
 
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
@@ -40,7 +41,9 @@ public fun Modifier.kikoKeys(
     input: KikoInput,
     onBack: () -> Unit,
 ): Modifier =
-    onKeyEvent { event ->
+    // A key down when the focus leaves (another window, a menu over the game) never sends its
+    // key up here: let go of every key then, or the game would see it held for ever.
+    onFocusChanged { if (!it.hasFocus && input.keys != 0) input.keys = 0 }.onKeyEvent { event ->
         if (event.key == Key.Escape || event.key == Key.Back) {
             if (event.type == KeyEventType.KeyUp) onBack()
             return@onKeyEvent true

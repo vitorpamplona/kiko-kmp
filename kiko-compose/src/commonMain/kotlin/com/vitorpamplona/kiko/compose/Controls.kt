@@ -25,6 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
@@ -99,6 +100,8 @@ internal fun DirectionPad(
     modifier: Modifier,
 ) {
     var held by remember { mutableIntStateOf(0) }
+    // The touch loop below lives as long as the control; a new game brings a new onChange.
+    val currentOnChange by rememberUpdatedState(onChange)
     Canvas(
         modifier
             .claimSystemGestures()
@@ -115,7 +118,7 @@ internal fun DirectionPad(
                         }
                         if (bits != held) {
                             held = bits
-                            onChange(bits)
+                            currentOnChange(bits)
                         }
                     }
                 }
@@ -168,6 +171,8 @@ internal fun ActionButtons(
     modifier: Modifier,
 ) {
     var held by remember { mutableIntStateOf(0) }
+    // The touch loop below lives as long as the control; a new game brings a new onChange.
+    val currentOnChange by rememberUpdatedState(onChange)
     Canvas(
         modifier
             .claimSystemGestures()
@@ -184,7 +189,7 @@ internal fun ActionButtons(
                         }
                         if (bits != held) {
                             held = bits
-                            onChange(bits)
+                            currentOnChange(bits)
                         }
                     }
                 }
