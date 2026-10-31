@@ -53,6 +53,9 @@ and moved here so any app can embed it.
   target) and `kiko.compose-library` (a published Compose module) set the targets, JVM 17, the
   Android SDK and namespace, the explicit API and its check, and publishing. A module's own build
   file holds only its dependencies and source sets.
+- `README.md` is for people deciding to use kiko: what it is, how to try it, the two lines that
+  add it, links onward. Keep it that short; details go to `kiko/README.md` (the runtime, its
+  status and gaps), `demo/README.md` (running the demo everywhere) or this file (building, rules).
 - `plans/` — design notes, `YYYY-MM-DD-<slug>.md`.
 - `tools/agent-hooks/` — the checks Claude Code and Codex run before a push (see below).
 

@@ -6,154 +6,52 @@
 [![CI](https://img.shields.io/github/actions/workflow/status/vitorpamplona/kiko-kmp/build.yml?labelColor=27303D)](https://github.com/vitorpamplona/kiko-kmp/actions/workflows/build.yml)
 [![License: MIT](https://img.shields.io/github/license/vitorpamplona/kiko-kmp?labelColor=27303D&color=0877d2)](LICENSE)
 
-A runtime for 128x128, 16-color fantasy-console cartridges (`.p8`, `.p8.png`, `.p8.rom`) in
-Kotlin Multiplatform: its own Lua interpreter with 16:16 fixed-point numbers, the console's memory
-map, graphics, text, sound, input, pause menu and cart formats. It depends on nothing but the
-Kotlin stdlib and runs on the JVM, Android, iOS, macOS, Linux, JavaScript and Wasm.
-
-It comes in three artifacts, so an app takes only what it needs:
-
-| Artifact | Depends on | What it does |
-|---|---|---|
-| `kiko` | the Kotlin stdlib | Runs one cart: your app calls `step()` once per frame, draws the pixels and plays the samples. |
-| `kiko-player` | `kiko`, kotlinx.coroutines | Plays it in real time without UI: the game thread, the frame clock, a hang watchdog, saves and the device's sound. |
-| `kiko-compose` | `kiko-player`, Compose Multiplatform | One composable, `KikoGame`, with the screen, touch controls, keyboard and gamepad, pausing with the app. |
-
-[Amethyst](https://github.com/vitorpamplona/amethyst) uses them to play carts posted on Nostr
-inside the app.
-
-Written from scratch from the public manual and community documentation of the formats. It is not
-affiliated with the makers of any console, and contains none of their code or assets.
-
-## Install
-
-```kotlin
-dependencies {
-    implementation("com.vitorpamplona.kiko:kiko-compose:<version>") // or kiko-player, or kiko
-}
-```
-
-| Requirement | |
-|---|---|
-| JVM | Java 17 |
-| Android | minSdk 26 |
-| Apple | iosArm64, iosSimulatorArm64, macosArm64 (`kiko-compose`: iOS only) |
-| Linux | linuxX64 (not `kiko-compose`) |
-| Web | js and wasmJs, in browsers and Node.js (`kiko-compose`: browsers) |
-
-## Usage
-
-The whole integration in Compose is one call
-([`OneCall.kt`](demo/shared/src/commonMain/kotlin/com/vitorpamplona/kiko/demo/examples/OneCall.kt)):
-
-```kotlin
-// Loads the cart, plays it with touch controls, keyboard, gamepad and sound, and pauses while the
-// app is in the background. kiko never downloads anything: `download` is your app's own.
-KikoGame(key = url, source = { download(url) }, modifier = Modifier.fillMaxSize())
-```
-
-The next questions each have a short example, compiled and tested with the demo:
-
-| Example | Shows |
-|---|---|
-| [`KeepTheGame.kt`](demo/shared/src/commonMain/kotlin/com/vitorpamplona/kiko/demo/examples/KeepTheGame.kt) | A `KikoPlayer` in a ViewModel, so a rotation keeps the game; saves (`KikoSaveStore`); your own words on screen (`KikoLabels`) |
-| [`OwnLayout.kt`](demo/shared/src/commonMain/kotlin/com/vitorpamplona/kiko/demo/examples/OwnLayout.kt) | The pieces `KikoGame` is made of (`KikoScreen`, `KikoStatus`, `KikoDirectionPad`, `KikoActionButtons`, `kikoKeys`) in a layout of your own |
-| [`Headless.kt`](demo/shared/src/commonMain/kotlin/com/vitorpamplona/kiko/demo/examples/Headless.kt) | `kiko-player` without Compose: play a cart, press buttons, copy frames |
-
-### The runtime alone
-
-```kotlin
-import com.vitorpamplona.kiko.cart.CartLoader
-import com.vitorpamplona.kiko.runtime.ConsoleHost
-import com.vitorpamplona.kiko.runtime.FantasyConsole
-
-// .p8.png, .p8 or .p8.rom: the format is read from the bytes, not the file name.
-val cart = CartLoader.load(bytes)
-
-val console =
-    FantasyConsole(
-        cart,
-        object : ConsoleHost {
-            override fun log(message: String) = println(message) // printh
-            override fun loadCartData(id: String): IntArray? = saves[id] // cartdata, 64 numbers
-            override fun saveCartData(id: String, values: IntArray) { saves[id] = values }
-        },
-    )
-
-// On one thread with a FantasyConsole.RECOMMENDED_STACK_BYTES stack, every 1/console.fps s:
-console.setButtons(0, held) // Buttons bits: LEFT, RIGHT, UP, DOWN, O, X, PAUSE
-console.step()
-console.render(pixels) // IntArray(128 * 128), ARGB, with the pause menu over it when open
-play(console.audioBuffer, console.audioSamples) // FantasyConsole.SAMPLE_RATE Hz mono floats
-
-// console.state and console.error say when the cart stops.
-// console.abort() stops it from any thread, even in the middle of a frame.
-```
-
-Everything a cart can reach outside itself goes through `ConsoleHost`, and each method has a
-default: logging, saves (`cartdata`), the other carts of a game in several parts (`load`,
-`reload`), the local time zone (`stat(90..95)`) and memory pressure.
-
-Carts come from strangers, so loading and running treat them as hostile: a malformed or malicious
-cart fails to load or stops with an error, without crashing the host, filling its memory or keeping
-a core busy after `abort()`.
-
-## What's inside
-
-- **Lua** with the console's dialect: compound assignment, `!=`, one-line `if`/`while`, `?` for
-  print, integer division `\`, the bit operators, `_ENV`, `goto`, metatables and coroutines.
-  Numbers are 16:16 fixed point with the original's overflow and rounding.
-- **Graphics**: every drawing call, palettes and the secondary palette, fill patterns with colors
-  and transparency, clipping, camera, sprites and maps with flips and stretching, `tline`, memory
-  remapping of the screen, sprite sheet and map, and the screen modes.
-- **Text**: the P8SCII character set and its control codes (colors, cursor, wide, tall, inverted
-  and outlined text, custom fonts in memory, one-off glyphs).
-- **Sound**: the eight waveforms, effects, custom instruments, music with fades and channel masks.
-- **System**: `cartdata` saves, the pause menu with `menuitem`, mouse and keyboard, the clock,
-  `run(param)`, `stop`, and games in several carts.
-
-## Status
-
-Played against 164 carts from the public forum: 151 run and render correctly through 300 frames of
-random input; 11 are the first part of a game in several carts and stop where the next cart would
-load (the host decides how to find it); 2 have their own bug when a button is held through a
-screen change. Known gaps: the sound filters (noise, buzz, detune, reverb, dampen) are not applied,
-the kana glyphs draw blank, and there is no CPU budget (a heavy cart runs as fast as the host
-allows instead of slowing down). Design notes: [`plans/`](plans).
+Plays fantasy-console games (128x128, 16 colors, `.p8` and `.p8.png` cartridges) inside any
+Kotlin Multiplatform app: Android, iOS, desktop and the web. Written from scratch, with its own Lua
+interpreter; not affiliated with the makers of any console.
 
 ## Try it
 
-```bash
-./gradlew :demo:run                          # desktop: a small game written for the demo
-./gradlew :demo:run --args="/path/to/game.p8.png"
-./gradlew :demo:wasmJsBrowserDevelopmentRun  # browser
-./gradlew :demo-android:installDebug         # Android, on a connected phone or emulator
-open demo/ios/KikoDemo.xcodeproj             # iOS: pick a simulator or your phone, then Run
-```
-
-Every version offers a short list of games: the demo's own cart, *Snowman* by aquova (CC0) and
-*1492* by A.C. Wright Design (MIT), with each game's author and license on screen. Thanks to
-them for sharing their games; [`demo/CREDITS.md`](demo/CREDITS.md) has the sources and
-licenses. All versions but the browser page can also open a cart of yours. The `pages.yml` workflow publishes that page to
-GitHub Pages from `main`. None of this is published to Maven.
-
-The iOS build runs Gradle from Xcode (`:demo:embedAndSignAppleFrameworkForXcode`), so Xcode
-needs a JDK 17+ it can find (`JAVA_HOME`, or `org.gradle.java.home` in
-`~/.gradle/gradle.properties`) and an Android SDK (`ANDROID_HOME` or `local.properties`), since
-every module also builds for Android. On a phone, pick your team under Signing & Capabilities.
-Games play silently on iOS for now: the player has no iOS sound output yet.
-
-## Building
+Play the demo [in your browser](https://vitorpamplona.com/kiko-kmp/), or run it on your desktop:
 
 ```bash
-./gradlew :kiko:jvmTest :kiko-player:jvmTest :kiko-compose:jvmTest
-./gradlew checkLinux checkWebNode   # every check that runs on Linux, as the pre-push hook does
-# Play a folder of carts headless and keep a screenshot of each (carts are not in this repo):
-./gradlew :kiko:jvmTest --tests '*CartSmokeTest*' -Dkiko.carts=/path/to/carts -Dkiko.out=/tmp/screens
+./gradlew :demo:run
 ```
 
-See [`AGENTS.md`](AGENTS.md) for the layout, the rules and the release process.
+[`demo/`](demo) also runs on Android and iOS.
+
+## Add it to your app
+
+```kotlin
+implementation("com.vitorpamplona.kiko:kiko-compose:0.2.0")
+```
+
+```kotlin
+KikoGame(key = url, source = { download(url) }, modifier = Modifier.fillMaxSize())
+```
+
+That is the whole integration: the game, touch controls, keyboard, gamepad and sound, paused while
+your app is in the background. kiko never downloads anything; `download` is your own code.
+
+When you need more, each of these is a short, tested example:
+
+- [Keep the game across a rotation, save high scores, use your own words](demo/shared/src/commonMain/kotlin/com/vitorpamplona/kiko/demo/examples/KeepTheGame.kt)
+- [Lay out the screen and controls yourself](demo/shared/src/commonMain/kotlin/com/vitorpamplona/kiko/demo/examples/OwnLayout.kt)
+- [Play without Compose](demo/shared/src/commonMain/kotlin/com/vitorpamplona/kiko/demo/examples/Headless.kt) (`kiko-player`), or [drive the frame loop yourself](kiko) (`kiko`)
+
+Runs on Android 8+, iOS, the JVM (Java 17+) and browsers, with Kotlin 2.4 and Compose
+Multiplatform 1.12.
+
+## Status
+
+151 of 164 games tested from the public forum run and draw through a few seconds of random input.
+Sound plays on Android and desktop only for now. Details and known gaps: [`kiko/`](kiko).
+
+## Contributing
+
+[`AGENTS.md`](AGENTS.md) has the layout, the rules, how to build and test, and how to release.
 
 ## License
 
-MIT. Carts are not part of this project: each keeps its author's license.
+MIT. Games keep their authors' licenses; the ones in the demo are credited in
+[`demo/CREDITS.md`](demo/CREDITS.md).
