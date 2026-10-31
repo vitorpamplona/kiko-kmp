@@ -225,7 +225,10 @@ class ConsoleFeaturesTest {
 
     @Test
     fun aStringThatDoublesForeverRunsOutOfMemory() {
-        val out = run("s='x' while true do s=s..s end")
+        // A few frames: building megabyte strings is slow on some targets (macOS), and once the
+        // allocator has charged its budget a frame that ran over ends there, so the cart may reach
+        // the limit only in the next one.
+        val out = run("s='x' while true do s=s..s end", frames = 10)
         assertEquals(1, out.size)
         assertTrue(out[0].contains("out of memory"), out[0])
     }
