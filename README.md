@@ -11,6 +11,13 @@ Kotlin Multiplatform: its own Lua interpreter with 16:16 fixed-point numbers, th
 map, graphics, text, sound, input, pause menu and cart formats. It depends on nothing but the
 Kotlin stdlib and runs on the JVM, Android, iOS, macOS, Linux, JavaScript and Wasm.
 
+<p align="center">
+  <img src="docs/screenshots/ios.png" height="420" alt="1492 playing on an iPhone, with the touch controls under the screen">
+  &nbsp;
+  <img src="docs/screenshots/browser.jpg" height="420" alt="1492 playing in a browser, with the touch controls beside the screen">
+</p>
+<p align="center"><sub><i>1492</i> by A.C. Wright Design (MIT), in the demo app on iOS and in a browser.</sub></p>
+
 It comes in three artifacts, so an app takes only what it needs:
 
 | Artifact | Depends on | What it does |
@@ -47,9 +54,17 @@ The whole integration in Compose is one call
 ([`OneCall.kt`](demo/shared/src/commonMain/kotlin/com/vitorpamplona/kiko/demo/examples/OneCall.kt)):
 
 ```kotlin
-// Loads the cart, plays it with touch controls, keyboard, gamepad and sound, and pauses while the
-// app is in the background. kiko never downloads anything: `download` is your app's own.
-KikoGame(key = url, source = { download(url) }, modifier = Modifier.fillMaxSize())
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import com.vitorpamplona.kiko.compose.KikoGame
+
+@Composable
+fun OneCall(url: String, download: suspend (String) -> ByteArray?) {
+    // Loads the cart, plays it with touch controls, keyboard, gamepad and sound, and pauses while
+    // the app is in the background. kiko never downloads anything: `download` is your app's own.
+    KikoGame(key = url, source = { download(url) }, modifier = Modifier.fillMaxSize())
+}
 ```
 
 The next questions each have a short example, compiled and tested with the demo:
@@ -59,36 +74,14 @@ The next questions each have a short example, compiled and tested with the demo:
 | [`KeepTheGame.kt`](demo/shared/src/commonMain/kotlin/com/vitorpamplona/kiko/demo/examples/KeepTheGame.kt) | A `KikoPlayer` in a ViewModel, so a rotation keeps the game; saves (`KikoSaveStore`); your own words on screen (`KikoLabels`) |
 | [`OwnLayout.kt`](demo/shared/src/commonMain/kotlin/com/vitorpamplona/kiko/demo/examples/OwnLayout.kt) | The pieces `KikoGame` is made of (`KikoScreen`, `KikoStatus`, `KikoDirectionPad`, `KikoActionButtons`, `kikoKeys`) in a layout of your own |
 | [`Headless.kt`](demo/shared/src/commonMain/kotlin/com/vitorpamplona/kiko/demo/examples/Headless.kt) | `kiko-player` without Compose: play a cart, press buttons, copy frames |
+| [`RuntimeAlone.kt`](demo/shared/src/commonMain/kotlin/com/vitorpamplona/kiko/demo/examples/RuntimeAlone.kt) | `kiko` alone, for an app with its own loop: load a cart (`CartLoader`), give it a `ConsoleHost`, then step, render and play its sound each frame |
 
 ### The runtime alone
 
-```kotlin
-import com.vitorpamplona.kiko.cart.CartLoader
-import com.vitorpamplona.kiko.runtime.ConsoleHost
-import com.vitorpamplona.kiko.runtime.FantasyConsole
-
-// .p8.png, .p8 or .p8.rom: the format is read from the bytes, not the file name.
-val cart = CartLoader.load(bytes)
-
-val console =
-    FantasyConsole(
-        cart,
-        object : ConsoleHost {
-            override fun log(message: String) = println(message) // printh
-            override fun loadCartData(id: String): IntArray? = saves[id] // cartdata, 64 numbers
-            override fun saveCartData(id: String, values: IntArray) { saves[id] = values }
-        },
-    )
-
-// On one thread with a FantasyConsole.RECOMMENDED_STACK_BYTES stack, every 1/console.fps s:
-console.setButtons(0, held) // Buttons bits: LEFT, RIGHT, UP, DOWN, O, X, PAUSE
-console.step()
-console.render(pixels) // IntArray(128 * 128), ARGB, with the pause menu over it when open
-play(console.audioBuffer, console.audioSamples) // FantasyConsole.SAMPLE_RATE Hz mono floats
-
-// console.state and console.error say when the cart stops.
-// console.abort() stops it from any thread, even in the middle of a frame.
-```
+`kiko` runs one cart and nothing more: your app owns the thread (with
+`FantasyConsole.RECOMMENDED_STACK_BYTES` of stack), calls `step()` once per frame, draws the
+128x128 pixels from `render()` and plays the samples in `audioBuffer`
+([`RuntimeAlone.kt`](demo/shared/src/commonMain/kotlin/com/vitorpamplona/kiko/demo/examples/RuntimeAlone.kt)).
 
 Everything a cart can reach outside itself goes through `ConsoleHost`, and each method has a
 default: logging, saves (`cartdata`), the other carts of a game in several parts (`load`,
@@ -98,28 +91,13 @@ Carts come from strangers, so loading and running treat them as hostile: a malfo
 cart fails to load or stops with an error, without crashing the host, filling its memory or keeping
 a core busy after `abort()`.
 
-## What's inside
+## Compatibility
 
-- **Lua** with the console's dialect: compound assignment, `!=`, one-line `if`/`while`, `?` for
-  print, integer division `\`, the bit operators, `_ENV`, `goto`, metatables and coroutines.
-  Numbers are 16:16 fixed point with the original's overflow and rounding.
-- **Graphics**: every drawing call, palettes and the secondary palette, fill patterns with colors
-  and transparency, clipping, camera, sprites and maps with flips and stretching, `tline`, memory
-  remapping of the screen, sprite sheet and map, and the screen modes.
-- **Text**: the P8SCII character set and its control codes (colors, cursor, wide, tall, inverted
-  and outlined text, custom fonts in memory, one-off glyphs).
-- **Sound**: the eight waveforms, effects, custom instruments, music with fades and channel masks.
-- **System**: `cartdata` saves, the pause menu with `menuitem`, mouse and keyboard, the clock,
-  `run(param)`, `stop`, and games in several carts.
-
-## Status
-
-Played against 164 carts from the public forum: 151 run and render correctly through 300 frames of
-random input; 11 are the first part of a game in several carts and stop where the next cart would
-load (the host decides how to find it); 2 have their own bug when a button is held through a
-screen change. Known gaps: the sound filters (noise, buzz, detune, reverb, dampen) are not applied,
-the kana glyphs draw blank, and there is no CPU budget (a heavy cart runs as fast as the host
-allows instead of slowing down). Design notes: [`plans/`](plans).
+Tested against 164 carts from the public forum: 151 run and render correctly through 300 frames of
+random input, and 11 are the first part of a game in several carts and stop where the next cart
+would load (the host decides how to find it). Known gaps: the sound filters (noise, buzz, detune,
+reverb, dampen) are not applied, the kana glyphs draw blank, and there is no CPU budget, so a heavy
+cart runs as fast as the host allows instead of slowing down. Design notes: [`plans/`](plans).
 
 ## Try it
 
