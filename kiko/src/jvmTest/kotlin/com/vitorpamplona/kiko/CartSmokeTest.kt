@@ -22,6 +22,7 @@ package com.vitorpamplona.kiko
 
 import com.vitorpamplona.kiko.cart.CartLoader
 import com.vitorpamplona.kiko.cart.P8scii
+import com.vitorpamplona.kiko.runtime.ConsoleHost
 import com.vitorpamplona.kiko.runtime.FantasyConsole
 import java.awt.image.BufferedImage
 import java.io.File
@@ -34,7 +35,8 @@ import kotlin.test.Test
  * Runs every cart in `-Dkiko.carts=<dir>` for a few seconds of game time, pressing
  * buttons now and then to get past title screens, and writes a scaled screenshot of each to
  * `-Dkiko.out=<dir>` (default: the build directory). Prints one line per cart with its
- * state and error. Skipped when no directory is given, so the regular build never needs carts.
+ * state and error. A cart that loads `#some_id` continues in `some_id.p8.png` from the same folder,
+ * if it is there. Skipped when no directory is given, so the regular build never needs carts.
  *
  * ./gradlew :kiko:jvmTest --tests '*CartSmokeTest*' -Dkiko.carts=/path/to/carts
  */
@@ -65,7 +67,7 @@ class CartSmokeTest {
         try {
             val cart = CartLoader.load(file.readBytes())
             File(out, file.name.removeSuffix(".png").removeSuffix(".p8") + ".lua").writeText(P8scii.toUnicode(cart.code))
-            val console = FantasyConsole(cart)
+            val console = FantasyConsole(cart, siblingsOf(file))
             val started = System.nanoTime()
             // A cart stuck inside one frame (an endless loop in _draw) is stopped after 10 s.
             val stepStarted = AtomicLong(0)
@@ -106,6 +108,15 @@ class CartSmokeTest {
         }
         println(line)
     }
+
+    private fun siblingsOf(cart: File) =
+        object : ConsoleHost {
+            override fun loadCart(name: String): ByteArray? {
+                val id = name.removePrefix("#")
+                if ('/' in id || '\\' in id) return null
+                return File(cart.parentFile, "$id.p8.png").takeIf { it.isFile }?.readBytes()
+            }
+        }
 
     private fun save(
         console: FantasyConsole,

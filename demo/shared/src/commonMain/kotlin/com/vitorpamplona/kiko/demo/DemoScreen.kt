@@ -35,18 +35,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.vitorpamplona.kiko.compose.KikoGame
 import com.vitorpamplona.kiko.compose.rememberKikoPlayer
+import com.vitorpamplona.kiko.player.KikoPlayerHost
 import kotlinx.coroutines.launch
 
 /**
  * The demo on every platform: one [KikoGame] (the whole integration; see `examples/` for more
  * ways to use kiko) under the demo's own [GameMenu]. Plays [opened], a cart the user picked
- * with [onOpen], or one of [DEMO_GAMES].
+ * with [onOpen], or one of [DEMO_GAMES]. [host] answers what the cart asks of the app.
  */
 @Composable
 fun DemoScreen(
     opened: ByteArray?,
     onOpen: (() -> Unit)?,
     onExit: (() -> Unit)? = null,
+    host: KikoPlayerHost? = null,
 ) {
     // The cart playing now, and the bundled game it is (null for the user's own).
     var cart by remember { mutableStateOf<ByteArray?>(null) }
@@ -71,7 +73,7 @@ fun DemoScreen(
         cart?.let { bytes ->
             // The whole integration: one KikoGame call, here with the player held by the demo so
             // the system Back gesture can open the game's pause menu first.
-            val player = rememberKikoPlayer(key = bytes) { bytes }
+            val player = rememberKikoPlayer(key = bytes, host = host) { bytes }
             KikoGame(player, Modifier.fillMaxSize().safeDrawingPadding(), onExit = onExit)
             SystemBack { if (!player.openPauseMenu()) onExit?.invoke() }
         }

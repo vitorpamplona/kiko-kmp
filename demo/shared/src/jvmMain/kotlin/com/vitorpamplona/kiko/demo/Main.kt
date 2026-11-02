@@ -37,29 +37,42 @@ import java.io.File
 
 /**
  * Plays the cart named on the command line (`.p8.png`, `.p8` or `.p8.rom`), or [DEMO_GAMES]
- * without one. File > Open (or "Open a cart…" in the game list) picks another. Saves last while the window
- * is open.
+ * without one. File > Open (or "Open a cart…" in the game list) picks another. A game in several
+ * carts finds the others beside the one opened (see [FolderCarts]). Saves last while the window is
+ * open.
  */
 fun main(args: Array<String>) =
     application {
-        var cart by remember { mutableStateOf(args.firstOrNull()?.let { File(it).readBytes() }) }
+        var cart by remember { mutableStateOf(args.firstOrNull()?.let { OpenedCart(File(it)) }) }
         Window(
             onCloseRequest = ::exitApplication,
             title = "kiko demo",
             state = rememberWindowState(width = 600.dp, height = 760.dp),
         ) {
+            val openCart = { pickCart(window)?.let { cart = OpenedCart(it) } }
             MenuBar {
                 Menu("File") {
-                    Item("Open cart…", shortcut = KeyShortcut(Key.O, ctrl = true)) {
-                        pickCart(window)?.let { cart = it.readBytes() }
-                    }
+                    Item("Open cart…", shortcut = KeyShortcut(Key.O, ctrl = true)) { openCart() }
                     Separator()
                     Item("Quit", shortcut = KeyShortcut(Key.Q, ctrl = true), onClick = ::exitApplication)
                 }
             }
-            DemoScreen(opened = cart, onOpen = { pickCart(window)?.let { cart = it.readBytes() } }, onExit = ::exitApplication)
+            DemoScreen(
+                opened = cart?.bytes,
+                onOpen = { openCart() },
+                onExit = ::exitApplication,
+                host = cart?.others,
+            )
         }
     }
+
+/** A cart read from [file], and where to find the rest of its game. */
+private class OpenedCart(
+    file: File,
+) {
+    val bytes = file.readBytes()
+    val others = FolderCarts(file.absoluteFile.parentFile)
+}
 
 private fun pickCart(parent: Frame): File? {
     val dialog = FileDialog(parent, "Open a cart", FileDialog.LOAD)

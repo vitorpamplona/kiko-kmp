@@ -59,8 +59,10 @@ public interface ConsoleHost {
     /**
      * The bytes of another cartridge, for a game that spans several: `load(name)` switches to it
      * and `reload(…, name)` reads its data. [name] is what the cart wrote, `#id` for a cart on
-     * the original's site and a file name otherwise. Called on the console's thread, so it may
-     * block; null when the host cannot find it.
+     * the original's site and a file name otherwise, so it comes from a stranger: look it up, never
+     * build a URL or a path from it. Null when the host cannot find it. Called on the console's
+     * thread inside a frame, which [FantasyConsole.abort] can't interrupt here, so answer from
+     * memory and fetch a game's carts before it starts. Each name is asked for once.
      */
     public fun loadCart(name: String): ByteArray? = null
 
@@ -115,7 +117,7 @@ public class FantasyConsole(
     /** `stat(100)`: the label of the cart `load()` came from. */
     internal val breadcrumbLabel: String? get() = breadcrumbs.lastOrNull()?.label
 
-    /** Other carts read by `reload(…, name)`, null for one the host could not supply. */
+    /** Other carts by the name `load` or `reload` used, null for one the host could not supply. */
     private val otherCarts = HashMap<String, Cart?>()
 
     private var frameStart = TimeSource.Monotonic.markNow()
@@ -156,6 +158,9 @@ public class FantasyConsole(
     private var frameWaiter: Continuation<Unit>? = null
     private var restartRequested = false
 
+    /** The next [boot] starts another cart of the game, so the memory they share stays. */
+    private var switchingCarts = false
+
     internal var cartDataId: String? = null
     internal var cartDataDirty = false
 
@@ -164,7 +169,12 @@ public class FantasyConsole(
     }
 
     private fun boot() {
-        ram.bytes.fill(0)
+        // A menu callback can leave the cart in the middle of a frame, before step() saves.
+        flushCartData()
+        // The manual doesn't say what `load` keeps. Community documentation has it overwrite only
+        // the cart's own data, and multi-cart games rely on that: Into Ruins hands its next cart a
+        // table in upper memory. Sources disagree on the screen, so it is cleared with the rest.
+        if (switchingCarts) ram.bytes.fill(0, Addr.CART_DATA, Addr.UPPER_MEMORY) else ram.bytes.fill(0)
         cart.rom.copyInto(ram.bytes, 0, 0, Addr.CART_DATA_END)
         graphics.reset()
         interp = Interpreter()
@@ -180,6 +190,7 @@ public class FantasyConsole(
         started = false
         frameWaiter = null
         restartRequested = false
+        switchingCarts = false
         cartDataId = null
         cartDataDirty = false
         timeBits = 0
@@ -433,8 +444,7 @@ public class FantasyConsole(
     /** `extcmd("breadcrumb")`: back to the cart that loaded this one, if there is one. */
     internal fun goBack() {
         val back = breadcrumbs.removeLastOrNull() ?: return
-        cart = back.cart
-        runParam = back.param
+        enterCart(back.cart, back.param)
         throw RestartRequest()
     }
 
@@ -447,23 +457,44 @@ public class FantasyConsole(
         if (request.breadcrumb != null && request.breadcrumb.length > 1) {
             breadcrumbs.add(Breadcrumb(cart, request.breadcrumb, runParam))
         }
-        cart = next
-        runParam = request.param ?: ""
+        enterCart(next, request.param ?: "")
         restartRequested = true
     }
 
-    /** Another cartridge by the name the cart used, read once and remembered. */
-    internal fun otherCart(name: String): Cart? =
-        otherCarts.getOrPut(name) {
+    private fun enterCart(
+        next: Cart,
+        param: String,
+    ) {
+        cart = next
+        runParam = param
+        switchingCarts = true
+    }
+
+    /**
+     * Another cartridge by the name the cart used, read once and remembered, found or not. The cart
+     * picks the names, so what is remembered is capped: past the cap, a new name is not available.
+     */
+    internal fun otherCart(name: String): Cart? {
+        if (name in otherCarts) return otherCarts[name]
+        if (name.length > MAX_CART_NAME || otherCarts.size >= MAX_OTHER_CARTS) return null
+        val other =
             try {
                 host.loadCart(name)?.let(CartLoader::load)
             } catch (e: CartFormatException) {
                 null
             }
-        }
+        otherCarts[name] = other
+        return other
+    }
 
     public companion object {
         private const val MAX_CPU_LOAD = 2.0
+
+        /** The names one console remembers. Our own limit: the manual sets none. */
+        internal const val MAX_OTHER_CARTS = 32
+
+        /** Longer than any file name; a string can be megabytes, and [otherCarts] keeps its keys. */
+        private const val MAX_CART_NAME = 256
 
         /**
          * The built-ins the console copies into top-level locals before a cart runs, on the cart's

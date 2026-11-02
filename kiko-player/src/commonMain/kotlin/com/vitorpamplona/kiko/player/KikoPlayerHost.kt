@@ -33,7 +33,10 @@ public interface KikoPlayerHost {
 
     /**
      * The bytes of another cart of the same game, by the name the cart used (`load`, `reload`),
-     * or null when the app has none: the game then stops with a message.
+     * or null when the app has none: the game then stops with a message. The name comes from a
+     * stranger, so look it up and never build a URL or a path from it. Called inside a frame: answer
+     * from memory and fetch a game's carts in [KikoPlayer]'s `source`, because a slow answer here
+     * can't be interrupted and counts against the watchdog. Each name is asked for once.
      */
     public fun loadCart(name: String): ByteArray? = null
 }

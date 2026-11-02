@@ -64,6 +64,7 @@ class KikoPlayerTest {
 
     private fun TestScope.player(
         store: KikoSaveStore? = null,
+        carts: Map<String, ByteArray> = emptyMap(),
         source: suspend () -> ByteArray?,
     ): KikoPlayer {
         val dispatcher = StandardTestDispatcher(testScheduler)
@@ -75,6 +76,8 @@ class KikoPlayerTest {
                     override fun log(message: String) {
                         log.add(message)
                     }
+
+                    override fun loadCart(name: String) = carts[name]
                 },
             openAudio = { null },
             gameDispatcher = dispatcher,
@@ -225,5 +228,45 @@ class KikoPlayerTest {
             play(player, 100.milliseconds)
             assertTrue("loaded 3" in log, "$log")
             assertEquals(4 shl 16, written.first().getValue("game")[0])
+        }
+
+    @Test
+    fun aGamesCartsShareTheirSavesBothWays() =
+        runPlayerTest {
+            val written = ArrayList<Map<String, IntArray>>()
+            val store =
+                object : KikoSaveStore {
+                    override suspend fun loadAll(): Map<String, IntArray> = emptyMap()
+
+                    override suspend fun save(saves: Map<String, IntArray>) {
+                        written.add(saves)
+                    }
+                }
+            val first =
+                cart(
+                    """
+                    cartdata("game")
+                    if dget(0) == 5 then
+                      printh("first cart reads 5")
+                    else
+                      dset(0, 4)
+                      load("#second")
+                    end
+                    function _draw() end
+                    """,
+                )
+            val second =
+                cart(
+                    """
+                    cartdata("game")
+                    printh("second cart reads " .. dget(0))
+                    dset(0, 5)
+                    load("#first")
+                    """,
+                )
+            val player = player(store, mapOf("#first" to first, "#second" to second)) { first }
+            play(player, 2.seconds)
+            assertEquals(listOf("second cart reads 4", "first cart reads 5"), log)
+            assertEquals(5 shl 16, written.last().getValue("game")[0])
         }
 }

@@ -290,7 +290,11 @@ internal class Api(
         fn("peek") { args ->
             val addr = args.int(0)
             val n = args.int(1, 1)
-            if (n <= 1) int(ram[addr]) else List(minOf(n, 8192)) { Fix.fromInt(ram[addr + it]) }
+            if (n <= 1) return@fn int(ram[addr])
+            // The manual says 8192 at most, but a published game reads 10,019 bytes this way and
+            // can't start with fewer, so only the 32767 a number can hold limits this one.
+            interp.charge(Interpreter.OBJECT_BYTES * n)
+            List(n) { Fix.fromInt(ram[addr + it]) }
         }
         fn("peek2") { args ->
             val addr = args.int(0)
@@ -481,7 +485,8 @@ internal class Api(
             one(s.substring(i - 1, j))
         }
         fn("split") { args ->
-            val s = tostr(args.getOrNull(0))
+            // The manual doesn't cover nil. Carts walk the result, so it must be empty, not "[nil]".
+            val s = args.getOrNull(0)?.let(::tostr) ?: return@fn one(LuaTable(0))
             val sep = args.getOrNull(1) ?: ","
             val convert = args.size < 3 || args.bool(2)
             // At most this many parts, each a string, a list slot and a table slot: charged before
@@ -728,7 +733,7 @@ internal class Api(
         proc("trace") {}
         fn("serial") { int(0) }
         fn("ls") { one(null) }
-        // Loading another cartridge (`load("#id")`) is not supported: the cart stops and says so.
+        // Another cartridge comes from the host; without one, the cart stops and says so.
         proc("load") {
             console.requestLoad(tostr(it.getOrNull(0)), it.getOrNull(1)?.let(::tostr), it.getOrNull(2)?.let(::tostr))
         }

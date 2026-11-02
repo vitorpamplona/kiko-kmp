@@ -72,6 +72,9 @@ internal object Addr {
     const val BTNP_DELAY = 0x5f5c
     const val BTNP_INTERVAL = 0x5f5d
     const val SCREEN = 0x6000
+
+    /** Memory no cart data maps to by default; carts may keep anything here. */
+    const val UPPER_MEMORY = 0x8000
 }
 
 internal class Ram : LuaMemory {

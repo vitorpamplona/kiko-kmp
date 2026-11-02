@@ -20,9 +20,6 @@
  */
 package com.vitorpamplona.kiko
 
-import com.vitorpamplona.kiko.cart.Cart
-import com.vitorpamplona.kiko.runtime.ConsoleHost
-import com.vitorpamplona.kiko.runtime.FantasyConsole
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -190,25 +187,102 @@ class ConsoleFeaturesTest {
 
     @Test
     fun gamesSpanSeveralCarts() {
-        val log = ArrayList<String>()
         val carts =
             mapOf(
                 "#part2" to "pico-8 cartridge\n__lua__\nprinth(\"part2 \" .. stat(6) .. \" \" .. stat(100)) extcmd(\"breadcrumb\")\n",
                 "data.p8" to "pico-8 cartridge\n__lua__\n__gfx__\n77\n",
             )
-        val console =
-            FantasyConsole(
-                Cart(ByteArray(Cart.ROM_SIZE), "reload(0, 0, 1, \"data.p8\") printh(peek(0)) printh(\"param \" .. stat(6)) if (stat(6) == \"\") load(\"#part2\", \"back to part 1\", \"from1\")"),
-                object : ConsoleHost {
-                    override fun log(message: String) {
-                        log.add(message)
-                    }
-
-                    override fun loadCart(name: String) = carts[name]?.encodeToByteArray()
-                },
+        val out =
+            run(
+                "reload(0, 0, 1, \"data.p8\") printh(peek(0)) printh(\"param \" .. stat(6)) if (stat(6) == \"\") load(\"#part2\", \"back to part 1\", \"from1\")",
+                frames = 4,
+                carts = carts,
             )
-        repeat(4) { console.step() }
-        assertEquals(listOf("119", "param ", "part2 from1 back to part 1", "119", "param "), log.take(5))
+        assertEquals(listOf("119", "param ", "part2 from1 back to part 1", "119", "param "), out.take(5))
+    }
+
+    private fun other(code: String) = mapOf("#other" to "pico-8 cartridge\n__lua__\n$code\n")
+
+    @Test
+    fun loadKeepsTheMemoryCartsPassDataIn() {
+        val out =
+            run(
+                "poke(0x4300,1) poke(0x5dff,2) poke(0x8000,3) poke(0xffff,4) load(\"#other\")",
+                frames = 3,
+                carts = other("printh(peek(0x4300)..\",\"..peek(0x5dff)..\",\"..peek(0x8000)..\",\"..peek(0xffff))"),
+            )
+        assertEquals(listOf("1,2,3,4"), out)
+    }
+
+    @Test
+    fun loadStillResetsTheRest() {
+        val out =
+            run(
+                "poke(0x42ff,1) poke(0x5e00,2) poke(0x7fff,3) color(3) load(\"#other\")",
+                frames = 3,
+                carts = other("printh(peek(0x42ff)..\",\"..peek(0x5e00)..\",\"..peek(0x7fff)..\",\"..peek(0x5f25))"),
+            )
+        assertEquals(listOf("0,0,0,6"), out)
+    }
+
+    @Test
+    fun goingBackToTheCartBeforeKeepsThatMemoryToo() {
+        val out =
+            run(
+                "if peek(0x8000)==0 then load(\"#other\",\"back\") else printh(peek(0x8000)) end",
+                frames = 4,
+                carts = other("poke(0x8000,7) extcmd(\"breadcrumb\")"),
+            )
+        assertEquals(listOf("7"), out)
+    }
+
+    @Test
+    fun aGamesCartsShareTheirSaves() {
+        val out =
+            run(
+                "cartdata(\"game\") dset(0,7) load(\"#other\")",
+                frames = 3,
+                carts = other("cartdata(\"game\") printh(dget(0))"),
+            )
+        assertEquals(listOf("7"), out)
+    }
+
+    @Test
+    fun aMenuCallbackThatLoadsACartKeepsWhatItSaved() {
+        val t =
+            TestConsole(
+                """
+                cartdata("game")
+                menuitem(1, "next", function() dset(0,7) load("#other") end)
+                function _update() end
+                function _draw() end
+                """.trimIndent(),
+                other("function _draw() end"),
+            )
+        t.frames(1)
+        t.console.setButtons(0, 0x40) // pause
+        t.frames(1)
+        t.console.setButtons(0, 0)
+        t.console.setButtons(0, 0x08) // down to the menu item
+        t.frames(1)
+        t.console.setButtons(0, 0)
+        t.console.setButtons(0, 0x20) // X
+        t.frames(1)
+        assertEquals(7 shl 16, t.saved["game"]?.get(0))
+    }
+
+    @Test
+    fun peekReadsMoreThan8192Bytes() {
+        // Into Ruins reads its 10,019 byte table back this way; a shorter list loses the end of it.
+        val out = run("poke(0x8000+10018,65) t={peek(0x8000,10019)} printh(#t..\",\"..t[10019])")
+        assertEquals(listOf("10019,65"), out)
+    }
+
+    @Test
+    fun splittingNothingGivesNothingToWalk() {
+        // Into Ruins passes a missing attack pattern here on every plain attack.
+        val out = run("for n in all(split(nil,\"|\")) do printh(\"part \"..n) end printh(\"done\")")
+        assertEquals(listOf("done"), out)
     }
 
     @Test
