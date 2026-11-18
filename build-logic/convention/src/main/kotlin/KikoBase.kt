@@ -11,10 +11,13 @@ import org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation
  * What every published kiko module shares: an explicit, checked public API; JVM 17 (a library
  * can't need a newer JVM than the apps that use it); Android at the catalog's SDK levels, with
  * the namespace taken from the module's name (kiko-player is com.vitorpamplona.kiko.player); and
- * Maven Central publishing, configured in the root build.
+ * publishing to Maven Central, configured in the root build, and to Nostr + Blossom with Magpie.
  */
 internal fun Project.configureKikoLibrary(withHostTest: Boolean) {
     pluginManager.apply("com.vanniktech.maven.publish")
+    // Releases also go to Nostr + Blossom: publishToNostr. Its relays come from gradle.properties
+    // (magpie.*); the root build puts the plugin on the classpath.
+    pluginManager.apply("com.vitorpamplona.magpie.publish")
 
     val libs = extensions.getByType<VersionCatalogsExtension>().named("libs")
 

@@ -213,5 +213,9 @@ Bump `VERSION_NAME` in `gradle.properties` (all three artifacts share it), then 
 `v<version>` tag. The
 `create-release.yml` workflow runs the Apple tests on macOS, then tests, publishes to Maven
 Central and opens the GitHub release. It needs `SONATYPE_USERNAME`, `SONATYPE_PASSWORD`,
-`SIGNING_PRIVATE_KEY` and `SIGNING_PASSWORD`, the same secrets as crypto-kmp and Quartz.
+`SIGNING_PRIVATE_KEY` and `SIGNING_PASSWORD`, the same secrets as crypto-kmp and Quartz. The workflow's `nostr` job publishes the same files to Nostr + Blossom with Magpie's
+`publishToNostr`, independently of Maven Central, so either can be re-run alone. It needs the
+signing secrets and `MAGPIE_BUNKER`, a NIP-46 `bunker://` URI for the release key that
+`vitorpamplona.com/.well-known/nostr.json` names as `releases`; the signer approves each release,
+and a version already on Nostr fails the job.
 JitPack builds snapshots of any commit (`jitpack.yml`): the common metadata, JVM and Android.
